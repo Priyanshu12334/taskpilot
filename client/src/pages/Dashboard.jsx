@@ -349,7 +349,7 @@ export default function Dashboard() {
       <Sidebar />
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto no-scrollbar pt-28 sm:pt-10 p-5 sm:p-14">
+      <main className="flex-1 overflow-y-auto no-scrollbar pt-32 sm:pt-10 p-5 sm:p-14 relative">
         <header className="mb-10 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white mb-2">Hi, <span className="text-emerald-500">{user?.name || 'User'}</span></h1>

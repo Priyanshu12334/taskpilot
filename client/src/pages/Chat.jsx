@@ -132,13 +132,13 @@ export default function Chat() {
       <Sidebar />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col h-screen no-scrollbar pt-24 sm:pt-2 p-2 sm:p-8">
-        <header className="p-4 sm:p-8 flex items-center justify-between shrink-0 border-b border-slate-800">
+      <main className="flex-1 flex flex-col no-scrollbar pt-32 md:pt-8 p-2 sm:p-10 relative">
+        <header className="p-4 sm:p-2 flex items-center justify-between shrink-0 border-b border-slate-800">
           <div>
-            <h1 className="text-2xl font-bold mb-1">
+            <h2 className="text-2xl font-bold mb-1">
               Team Chat
-            </h1>
-            <p className="text-slate-400 text-sm font-medium">Here discuss your problems with the team.</p>
+            </h2>
+             <p className="text-slate-400 text-sm font-medium">Here discuss your problems with the team.</p>
           </div>
         </header>
 

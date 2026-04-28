@@ -187,8 +187,8 @@ export default function Sidebar() {
   return (
     <>
       {/* Mobile Top Header */}
-      <div className="sm:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-4 bg-gradient-to-br from-slate-600/30 to-slate-900 backdrop-blur-xl border-b border-white/5">
-        <div className="flex items-center gap-1">
+      <div className="sm:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-4 bg-gradient-to-br from-slate-600/30 to-slate-900 backdrop-blur-xl border-b border-slate-700/50">
+        <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-gradient-to-br from-slate-700 to-slate-700 rounded-3xl flex items-center justify-center shadow-lg shadow-black/50 border border-slate-700/30">
              <span className="text-[12px] font-black tracking-widest text-white">TP</span>
           </div>

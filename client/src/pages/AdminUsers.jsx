@@ -356,7 +356,7 @@ export default function AdminUsers() {
 
         <Sidebar />
 
-        <main className="flex-1 overflow-y-auto no-scrollbar pt-28 sm:pt-0">
+        <main className="flex-1 overflow-y-auto no-scrollbar pt-32 sm:pt-0 relative">
           <div className="p-4 sm:p-12 max-w-7xl mx-auto w-full">
 
             {/* Header Section */}

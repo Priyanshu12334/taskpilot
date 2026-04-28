@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, Check, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { io } from 'socket.io-client';
+import { socket } from '../socket';
 import api from '../services/api';
 import clsx from 'clsx';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 dayjs.extend(relativeTime);
-
-const socket = io('http://localhost:5000', { autoConnect: false });
 
 export default function NotificationDropdown() {
   const { user } = useAuth();
@@ -21,7 +19,8 @@ export default function NotificationDropdown() {
     localStorage.getItem(`lastRead_${user?._id}`) || 0
   );
 
-  const unreadCount = notifications.filter(n => {
+  const safeNotifications = Array.isArray(notifications) ? notifications : [];
+  const unreadCount = safeNotifications.filter(n => {
     if (user?.role?.toLowerCase() === 'admin') {
       return new Date(n.createdAt).getTime() > lastReadTimestamp;
     }

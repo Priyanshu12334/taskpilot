@@ -2,13 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare, Send, Loader2, Trash2 } from 'lucide-react';
-import { io } from 'socket.io-client';
+import { socket } from '../socket';
 import api from '../services/api';
 import clsx from 'clsx';
 import Sidebar from '../components/Sidebar';
 
-// Attempt connect to the absolute local backend path directly bypassing Vite proxy issues
-const socket = io('http://localhost:5000', { autoConnect: false });
+// Shared socket instance imported above
 
 export default function Chat() {
   const { user, logout } = useAuth();

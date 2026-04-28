@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Plus, Edit2, Trash2, Check, User, AlertTriangle, X, History, Clock, RefreshCw, CheckCircle2, UserPlus, MessageSquare, Send, Lock, LayoutGrid, Calendar } from 'lucide-react';
 import api from '../services/api';
-import { io } from 'socket.io-client';
+import { socket } from '../socket';
 import clsx from 'clsx';
 import Sidebar from '../components/Sidebar';
 import dayjs from 'dayjs';
@@ -120,7 +120,6 @@ export default function Dashboard() {
 
     // Listen for completion alerts (Admin only)
     if (user?.role?.toLowerCase() === 'admin') {
-      const socket = io('http://localhost:5000');
       socket.on('taskCompletedAlert', (data) => {
         if (data.userId !== user._id) {
           setCompletionAlert(prev => {

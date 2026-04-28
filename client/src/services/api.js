@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-const api = axios.create({
-  // If running via Vite, the proxy rule in vite.config.js forwards /api to localhost:5000.
-  // Alternatively, providing the direct URL also works: 'http://localhost:5000/api'
-  baseURL: '/api',
+const API = import.meta.env.VITE_API_URL;
+
+  const api = axios.create({  
+  baseURL: API + '/api',
 });
 
 // Interceptor to attach the token automatically to requests

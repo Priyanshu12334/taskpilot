@@ -19,7 +19,7 @@ connectDB();
 // Initialize the Express application
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://your-frontend-url.vercel.app"
+  process.env.CLIENT_URL
 ];
 
 const app = express();
@@ -88,7 +88,13 @@ app.set('io', io);
 
 // Middleware
 app.use(cors({
-  origin: allowedOrigins,
+  origin: function(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true
 })); // Allow cross-origin requests (e.g., from our React frontend)
 app.use(express.json()); // Allow parsing of incoming JSON payloads

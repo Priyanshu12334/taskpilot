@@ -53,7 +53,7 @@ export default function Register() {
     <div className="h-screen bg-gradient-to-br from-slate-600 via-slate-900 to-slate-800 animate-gradient flex items-center justify-center p-4 relative overflow-hidden">
       <div className="w-full max-w-[420px] max-h-[95vh] overflow-y-auto no-scrollbar bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl p-5 sm:p-8 relative z-10 box-border">
         <div className="text-center mb-4 sm:mb-5">
-          <div className="bg-gradient-to-br from-slate-600 to-slate-900 w-10 h-10 sm:w-12 sm:h-12 rounded-2xl sm:rounded-3xl mx-auto flex items-center justify-center mb-2 sm:mb-3 shadow-lg shadow-black/30 border border-slate-700/50">
+          <div className="bg-gradient-to-br from-slate-700 to-slate-700 w-10 h-10 sm:w-12 sm:h-12 rounded-3xl sm:rounded-3xl mx-auto flex items-center justify-center mb-2 sm:mb-3 shadow-lg shadow-black/50 border border-slate-700/50">
             <span className="text-[12px] sm:text-[14px] font-black tracking-widest text-white">TP</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-emerald-500 tracking-tight mb-0.5 sm:mb-1">Create Account</h1>

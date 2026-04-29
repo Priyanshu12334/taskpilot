@@ -39,7 +39,7 @@ export default function ContactUs() {
       
       <Sidebar />
       
-      <main className="flex-1 overflow-y-auto no-scrollbar pt-32 sm:pt-8 p-5 sm:p-14 relative">
+      <main className="flex-1 overflow-y-auto h-full no-scrollbar pt-40 sm:pt-8 p-5 sm:p-14 relative">
         <header className="mb-16 relative z-10">
           <h1 className="text-2xl font-bold text-slate-100 mb-1 tracking-tight">Contact Us</h1>
           <p className="text-slate-400 text-sm font-medium ">

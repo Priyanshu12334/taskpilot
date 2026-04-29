@@ -192,7 +192,7 @@ export default function Sidebar() {
           <div className="w-8 h-8 bg-gradient-to-br from-slate-700 to-slate-700 rounded-3xl flex items-center justify-center shadow-lg shadow-black/50 border border-slate-700/30">
              <span className="text-[12px] font-black tracking-widest text-white">TP</span>
           </div>
-          <h2 className="text-lg font-medium text-white tracking-tight">
+          <h2 className="text-lg text-white tracking-tight">
             Task<span className="font-bold text-emerald-500">Pilot</span>
           </h2>
         </div>

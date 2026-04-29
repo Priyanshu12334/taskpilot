@@ -95,7 +95,7 @@ export default function Settings() {
     
       <Sidebar />
 
-      <main className="flex-1 overflow-y-auto no-scrollbar pt-32 sm:pt-12 p-5 sm:p-12 relative">
+      <main className="flex-1 overflow-y-auto no-scrollbar h-full pt-40 sm:pt-12 p-5 sm:p-12 relative">
         <div className="max-w-2xl mx-auto">
           <header className="mb-10">
             <h1 className="text-2xl font-bold text-white">Account Settings</h1>

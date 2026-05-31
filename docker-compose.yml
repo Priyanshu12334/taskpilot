@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./server
+    container_name: taskpilot-backend
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./server/.env
+
+  frontend:
+    build: ./client
+    container_name: taskpilot-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend

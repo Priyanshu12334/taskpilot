@@ -1,32 +1,120 @@
-# 🚀 TaskPilot - Task Management Web App
+# TaskPilot
 
-A full-stack Task Management application built using the MERN stack. It allows users to manage tasks efficiently, collaborate with teams, and track progress in real-time.
+TaskPilot is a full-stack MERN application for team collaboration and task management. Users can create tasks, assign them to team members, track progress, and communicate through real-time team chat.
 
----
+## Features
 
-## ✨ Features
+* User Authentication (JWT)
+* Task Creation and Management
+* Task Assignment
+* Team Chat using Socket.IO
+* Dashboard with Task Statistics
+* User Roles and Permissions
+* Responsive User Interface
 
-- 🔐 User Authentication (Register/Login)
-- 📝 Create, Update, Delete Tasks
-- 👥 Team Collaboration
-- 💬 Real-time updates (Socket.IO)
-- 📱 Fully Responsive UI (Mobile + Desktop)
-- ⚡ Fast performance using React + Vite
-- 🌐 Deployed on Vercel (Frontend) & Render (Backend)
-
----
-
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Frontend
-- React (Vite)
-- Tailwind CSS
-- Axios
-- Socket.IO Client
+
+* React.js
+* Vite
+* Tailwind CSS
+* Axios
+* React Router
 
 ### Backend
-- Node.js
-- Express.js
-- MongoDB (Mongoose)
-- Socket.IO
 
+* Node.js
+* Express.js
+* MongoDB
+* Mongoose
+* JWT Authentication
+* Socket.IO
+
+## Project Structure
+
+```text
+TEAM/
+├── client/
+├── server/
+├── docker-compose.yml
+└── README.md
+```
+
+## Installation
+
+### Clone Repository
+
+```bash
+git clone <repository-url>
+cd TEAM
+```
+
+### Install Dependencies
+
+Frontend:
+
+```bash
+cd client
+npm install
+```
+
+Backend:
+
+```bash
+cd server
+npm install
+```
+
+## Environment Variables
+
+Create a `.env` file inside the `server` folder and add the required environment variables.
+
+Example:
+
+```env
+PORT=5000
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_secret_key
+```
+
+## Run Locally
+
+Backend:
+
+```bash
+cd server
+npm start
+```
+
+Frontend:
+
+```bash
+cd client
+npm run dev
+```
+
+## Run with Docker
+
+Build and start all services:
+
+```bash
+docker compose up --build
+```
+
+Stop all services:
+
+```bash
+docker compose down
+```
+
+## Default Ports
+
+* Frontend: http://localhost:3000
+* Backend: http://localhost:5000
+
+## Author
+
+Priyanshu Suyal
+
+GitHub: https://github.com/Priyanshu12334

@@ -1,4 +1,4 @@
-# TaskPilot
+# TaskPilot - Collaborative Task Management Platform
 
 TaskPilot is a full-stack MERN application for team collaboration and task management. Users can create tasks, assign them to team members, track progress, and communicate through real-time team chat.
 

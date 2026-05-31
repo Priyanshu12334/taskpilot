@@ -108,6 +108,12 @@ Stop all services:
 docker compose down
 ```
 
+## Live Demo
+
+* Frontend: https://taskpilot-ivory.vercel.app
+
+* Backend API: https://taskpilot-backend-0lk1.onrender.com
+
 ## Default Ports
 
 * Frontend: http://localhost:3000

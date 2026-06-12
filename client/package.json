@@ -18,6 +18,7 @@
     "react-datepicker": "^9.1.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.30.3",
+    "recharts": "^3.8.1",
     "socket.io-client": "^4.8.3",
     "tailwind-merge": "^2.1.0"
   },

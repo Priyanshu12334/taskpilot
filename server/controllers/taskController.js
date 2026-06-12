@@ -291,4 +291,54 @@ const deleteTask = async (req, res) => {
   }
 };
 
-module.exports = { createTask, getTasks, updateTask, deleteTask };
+const getWeeklyActivity = async (req, res) => {
+  try {
+    const role = req.user.role?.toLowerCase();
+    const query = {};
+    const isAdmin = role === 'admin';
+
+    if (!isAdmin) {
+      // Members/SimpleUsers show tasks assigned to them only
+      query.assignedTo = req.user._id;
+    }
+
+    const tasks = await taskService.getWeeklyActivity(query);
+
+    // Build the 7 days array based on local timezone to match user's perspective
+    const result = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const dayVal = String(d.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${dayVal}`;
+      result.push({
+        date: dateString,
+        day: dayName,
+        count: 0
+      });
+    }
+
+    // Populate counts matching the same local timezone format
+    tasks.forEach(task => {
+      const d = new Date(task.createdAt);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const dayVal = String(d.getDate()).padStart(2, '0');
+      const taskDateStr = `${year}-${month}-${dayVal}`;
+      
+      const entry = result.find(r => r.date === taskDateStr);
+      if (entry) {
+        entry.count++;
+      }
+    });
+
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { createTask, getTasks, updateTask, deleteTask, getWeeklyActivity };

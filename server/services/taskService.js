@@ -68,6 +68,17 @@ const deleteTask = async (task) => {
   return await task.deleteOne();
 };
 
+const getWeeklyActivity = async (query) => {
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+  sevenDaysAgo.setHours(0, 0, 0, 0);
+
+  return await Task.find({
+    ...query,
+    createdAt: { $gte: sevenDaysAgo }
+  }, 'createdAt');
+};
+
 module.exports = {
   createTask,
   countTasks,
@@ -75,5 +86,6 @@ module.exports = {
   getTaskStats,
   findTaskById,
   updateTask,
-  deleteTask
+  deleteTask,
+  getWeeklyActivity
 };

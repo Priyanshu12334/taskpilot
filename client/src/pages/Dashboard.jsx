@@ -9,6 +9,7 @@ import Sidebar from '../components/Sidebar';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import Loader from '../components/Loader';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
 dayjs.extend(relativeTime);
 
@@ -32,6 +33,7 @@ let cachedForUserId = null;
 let cachedTasks = null;
 let cachedStats = null;
 let cachedTotalPages = null;
+let cachedWeeklyActivity = null;
 
 const StatsSkeletonCard = () => (
   <div className="bg-slate-700/30 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-center shadow-lg shadow-black/10 shimmer-wrapper animate-pulse-subtle min-h-[96px]">
@@ -76,12 +78,21 @@ export default function Dashboard() {
     cachedTasks = null;
     cachedStats = null;
     cachedTotalPages = null;
+    cachedWeeklyActivity = null;
     cachedForUserId = user?._id;
   }
   
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [tasks, setTasks] = useState(cachedTasks || []);
   const [loadingTasks, setLoadingTasks] = useState(!cachedTasks);
+  const [weeklyActivity, setWeeklyActivity] = useState(cachedWeeklyActivity || []);
+  const [loadingWeekly, setLoadingWeekly] = useState(!cachedWeeklyActivity);
+  const [chartError, setChartError] = useState('');
+
+  const isUserAdmin = user?.role?.toLowerCase() === 'admin';
+  const chartTitle = isUserAdmin ? "Weekly Task Activity" : "Weekly Assigned Tasks";
+  const tooltipLabel = isUserAdmin ? "Tasks Created" : "Tasks Assigned";
+  const emptyStateMessage = isUserAdmin ? "No task activity available" : "No assigned tasks available";
 
   // Form states for creating a new task
   const [title, setTitle] = useState('');
@@ -246,6 +257,26 @@ export default function Dashboard() {
     }
   };
 
+  const fetchWeeklyActivity = async () => {
+    try {
+      const res = await api.get('/tasks/weekly-activity');
+      setWeeklyActivity(res.data);
+      cachedWeeklyActivity = res.data;
+      setChartError('');
+    } catch (err) {
+      console.error("Failed to fetch weekly activity:", err);
+      setChartError("Failed to load task activity chart.");
+    } finally {
+      setLoadingWeekly(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user?._id) {
+      fetchWeeklyActivity();
+    }
+  }, [user?._id]);
+
   // 2. Handle Add Task Submit
   const [taskError, setTaskError] = useState('');
   
@@ -273,6 +304,7 @@ export default function Dashboard() {
       const res = await api.post('/tasks', payload);
       console.log('[handleAddTask] ✅ Task created:', res.data);
       await fetchTasks();
+      await fetchWeeklyActivity();
       setTitle('');
       setDescription('');
       setStatus('Pending');
@@ -295,6 +327,7 @@ export default function Dashboard() {
     try {
       await api.delete(`/tasks/${taskId}`);
       await fetchTasks();
+      await fetchWeeklyActivity();
     } catch (error) {
       alert("Failed to delete task.");
       console.error(error);
@@ -390,6 +423,7 @@ export default function Dashboard() {
       cachedTasks = null;
       cachedStats = null;
       cachedTotalPages = null;
+      cachedWeeklyActivity = null;
       setTimeout(() => {
         logout();
         navigate('/login', { replace: true });
@@ -534,6 +568,69 @@ export default function Dashboard() {
                 <p className="text-2xl sm:text-3xl font-bold text-red-500">{stats.overdue || 0}</p>
               </div>
             </>
+          )}
+        </div>
+
+        {/* Weekly Task Activity Chart */}
+        <div className="bg-slate-900 border border-slate-700/50 rounded-2xl p-6 mb-12 shadow-lg">
+          <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-emerald-400" /> {chartTitle}
+          </h2>
+          {loadingWeekly ? (
+            <div className="h-64 flex items-center justify-center bg-slate-950/20 rounded-xl border border-slate-800 animate-pulse-subtle shimmer-wrapper">
+              <div className="text-slate-500 text-sm font-medium">Loading activity chart...</div>
+            </div>
+          ) : chartError ? (
+            <div className="h-64 flex items-center justify-center bg-red-500/5 border border-red-500/20 text-red-400 rounded-xl">
+              <p>{chartError}</p>
+            </div>
+          ) : weeklyActivity.every(d => d.count === 0) ? (
+            <div className="h-64 flex flex-col items-center justify-center bg-slate-950/20 rounded-xl border border-slate-800 text-slate-500">
+              <Calendar className="w-10 h-10 mb-2 opacity-30" />
+              <p className="text-sm font-medium">{emptyStateMessage}</p>
+            </div>
+          ) : (
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={weeklyActivity} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
+                  <XAxis 
+                    dataKey="day" 
+                    stroke="#94a3b8" 
+                    fontSize={12} 
+                    fontWeight={500} 
+                    tickLine={false} 
+                    axisLine={false} 
+                  />
+                  <YAxis 
+                    stroke="#94a3b8" 
+                    fontSize={12} 
+                    fontWeight={500} 
+                    tickLine={false} 
+                    axisLine={false}
+                    allowDecimals={false}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#1e293b', 
+                      borderColor: '#475569', 
+                      borderRadius: '12px',
+                      color: '#f8fafc' 
+                    }}
+                    labelStyle={{ fontWeight: 'bold', color: '#10b981' }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="count" 
+                    name={tooltipLabel}
+                    stroke="#10b981" 
+                    strokeWidth={3} 
+                    activeDot={{ r: 8, stroke: '#064e3b', strokeWidth: 2 }} 
+                    dot={{ r: 4, stroke: '#10b981', strokeWidth: 2, fill: '#1e293b' }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           )}
         </div>
 

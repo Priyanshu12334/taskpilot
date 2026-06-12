@@ -79,17 +79,86 @@ function RoleBadge({ role }) {
   );
 }
 
+// Module-level caches to prevent flashing loading states when returning to User Management
+let cachedForUserId = null;
+let cachedUsers = null;
+let cachedAdminStats = null;
+
+const AdminStatsSkeletonCard = () => (
+  <div className="bg-slate-700/30 border border-slate-700/50 p-6 rounded-2xl shimmer-wrapper animate-pulse-subtle min-h-[92px]">
+    <div className="h-7 w-12 bg-slate-700/50 rounded mb-2"></div>
+    <div className="h-3.5 w-24 bg-slate-700/50 rounded"></div>
+  </div>
+);
+
+const UserRowSkeleton = () => (
+  <tr className="animate-pulse-subtle border-b border-slate-700/30">
+    <td className="px-6 py-5">
+      <div className="h-4 w-4 bg-slate-800 rounded"></div>
+    </td>
+    <td className="px-6 py-5">
+      <div className="flex items-center gap-4">
+        <div className="w-11 h-11 rounded-[14px] bg-slate-800 shrink-0"></div>
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="h-4 w-24 bg-slate-800 rounded"></div>
+          <div className="h-3.5 w-40 bg-slate-800 rounded"></div>
+          <div className="h-5 w-48 bg-slate-800 rounded-lg"></div>
+        </div>
+      </div>
+    </td>
+    <td className="px-6 py-5">
+      <div className="flex flex-col gap-1.5 items-start">
+        <div className="h-5 w-16 bg-slate-800 rounded-full"></div>
+        <div className="h-4.5 w-12 bg-slate-800 rounded-md"></div>
+      </div>
+    </td>
+    <td className="px-6 py-5">
+      <div className="flex items-center justify-end gap-3">
+        <div className="h-8 w-24 bg-slate-800 rounded-xl"></div>
+        <div className="h-6 w-px bg-slate-700/50"></div>
+        <div className="h-8 w-32 bg-slate-800 rounded-xl"></div>
+      </div>
+    </td>
+  </tr>
+);
+
+const UserCardSkeleton = () => (
+  <div className="bg-slate-800/20 border border-slate-700/50 rounded-2xl p-5 space-y-4 shadow-xl animate-pulse-subtle">
+    <div className="flex items-center gap-4">
+      <div className="w-12 h-12 rounded-2xl bg-slate-800 shrink-0"></div>
+      <div className="min-w-0 flex-1 space-y-2">
+        <div className="h-4 w-24 bg-slate-800 rounded"></div>
+        <div className="h-3 w-40 bg-slate-800 rounded"></div>
+        <div className="h-3 w-48 bg-slate-800 rounded"></div>
+      </div>
+      <div className="h-5 w-16 bg-slate-800 rounded-full"></div>
+    </div>
+    <div className="pt-4 border-t border-slate-700/50 flex flex-col gap-2.5">
+      <div className="h-8 w-full bg-slate-800 rounded-xl"></div>
+      <div className="h-8 w-full bg-slate-800 rounded-xl"></div>
+    </div>
+  </div>
+);
+
 // ─── Main Page ───────────────────────────────────────────
 export default function AdminUsers() {
   const { user, updateUserData } = useAuth();
-  const [users, setUsers]     = useState([]);
-  const [loading, setLoading] = useState(true);
+
+  // Clear user cache if user changes (e.g. log out and log in as another user)
+  if (cachedForUserId !== user?._id) {
+    cachedUsers = null;
+    cachedAdminStats = null;
+    cachedForUserId = user?._id;
+  }
+
+  const [users, setUsers]     = useState(cachedUsers || []);
+  const [loading, setLoading] = useState(!cachedUsers);
   const [refreshing, setRefreshing] = useState(false);
   const [rowLoading, setRowLoading] = useState({});
   const [search, setSearch]   = useState('');
   const [filterRole, setFilterRole] = useState('All');
   const [toasts, setToasts]   = useState([]);
-  const [stats, setStats]     = useState({
+  const [stats, setStats]     = useState(cachedAdminStats || {
     totalUsers: 0,
     blockedUsers: 0,
     simpleUsers: 0,
@@ -102,7 +171,7 @@ export default function AdminUsers() {
       fetchUsers(); 
       fetchStats();
     }
-  }, [user]);
+  }, [user?._id]);
 
   // ── Toast helpers ──
   const addToast = useCallback((message, type = 'success') => {
@@ -120,6 +189,7 @@ export default function AdminUsers() {
     try {
       const res = await api.get('/user/all');
       setUsers(res.data);
+      cachedUsers = res.data;
     } catch {
       addToast('Failed to load users. Please try again.', 'error');
     } finally {
@@ -133,6 +203,7 @@ export default function AdminUsers() {
     try {
       const res = await api.get('/admin/stats');
       setStats(res.data);
+      cachedAdminStats = res.data;
     } catch (err) {
       console.error("Failed to fetch stats", err);
     }
@@ -143,7 +214,11 @@ export default function AdminUsers() {
     setRowLoading(prev => ({ ...prev, [targetUser._id]: true }));
     try {
       const res = await api.put(`/admin/promote-user/${targetUser._id}`);
-      setUsers(prev => prev.map(u => u._id === res.data._id ? { ...u, role: res.data.role, status: res.data.status } : u));
+      setUsers(prev => {
+        const next = prev.map(u => u._id === res.data._id ? { ...u, role: res.data.role, status: res.data.status } : u);
+        cachedUsers = next;
+        return next;
+      });
       fetchStats();
       addToast(`✓ ${targetUser.name} promoted to Member!`, 'success');
     } catch (err) {
@@ -160,7 +235,11 @@ export default function AdminUsers() {
     setRowLoading(prev => ({ ...prev, [targetUser._id]: true }));
     try {
       const res = await api.put(`/admin/block-user/${targetUser._id}`);
-      setUsers(prev => prev.map(u => u._id === res.data._id ? { ...u, status: 'blocked' } : u));
+      setUsers(prev => {
+        const next = prev.map(u => u._id === res.data._id ? { ...u, status: 'blocked' } : u);
+        cachedUsers = next;
+        return next;
+      });
       fetchStats();
       addToast(`✓ ${targetUser.name} has been blocked.`, 'success');
     } catch (err) {
@@ -174,7 +253,11 @@ export default function AdminUsers() {
     setRowLoading(prev => ({ ...prev, [targetUser._id]: true }));
     try {
       const res = await api.put(`/admin/unblock-user/${targetUser._id}`);
-      setUsers(prev => prev.map(u => u._id === res.data._id ? { ...u, status: 'active' } : u));
+      setUsers(prev => {
+        const next = prev.map(u => u._id === res.data._id ? { ...u, status: 'active' } : u);
+        cachedUsers = next;
+        return next;
+      });
       fetchStats();
       addToast(`✓ ${targetUser.name} has been unblocked.`, 'success');
     } catch (err) {
@@ -192,7 +275,11 @@ export default function AdminUsers() {
     setRowLoading(prev => ({ ...prev, [targetUser._id]: true }));
     try {
       const res = await api.patch(`/user/${targetUser._id}/role`, { role: newRole });
-      setUsers(prev => prev.map(u => u._id === res.data._id ? res.data : u));
+      setUsers(prev => {
+        const next = prev.map(u => u._id === res.data._id ? res.data : u);
+        cachedUsers = next;
+        return next;
+      });
       fetchStats();
       if (res.data._id === user?._id) updateUserData({ role: res.data.role });
       addToast(`✓ ${targetUser.name} is now ${newRole}.`, 'success');
@@ -208,7 +295,11 @@ export default function AdminUsers() {
     setRowLoading(prev => ({ ...prev, [targetUser._id]: true }));
     try {
       const res = await api.patch(`/user/${targetUser._id}/chat-access`, { canAccessChat: newStatus });
-      setUsers(prev => prev.map(u => u._id === res.data._id ? { ...u, canAccessChat: res.data.canAccessChat } : u));
+      setUsers(prev => {
+        const next = prev.map(u => u._id === res.data._id ? { ...u, canAccessChat: res.data.canAccessChat } : u);
+        cachedUsers = next;
+        return next;
+      });
       
       // If the admin is toggling THEIR OWN chat access, update globally
       if (res.data._id === user?._id) {
@@ -384,7 +475,16 @@ export default function AdminUsers() {
 
             {/* Stats Overview */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-                {[{ label: 'Total Users', val: stats.totalUsers, color: 'slate' },
+              {loading ? (
+                <>
+                  <AdminStatsSkeletonCard />
+                  <AdminStatsSkeletonCard />
+                  <AdminStatsSkeletonCard />
+                  <AdminStatsSkeletonCard />
+                  <AdminStatsSkeletonCard />
+                </>
+              ) : (
+                [{ label: 'Total Users', val: stats.totalUsers, color: 'slate' },
                   { label: 'Simple User', val: stats.simpleUsers, color: 'yellow' },
                   { label: 'Team Members', val: stats.members, color: 'emerald' },
                   { label: 'Admins', val: stats.admins, color: 'blue' },
@@ -414,7 +514,8 @@ export default function AdminUsers() {
                       <p className="text-sm font-medium text-slate-500 uppercase tracking-wide">{stat.label}</p>
                     </div>
                   </div>
-                ))}
+                ))
+              )}
             </div>
 
             {/* Filters & Actions Bar */}
@@ -466,14 +567,11 @@ export default function AdminUsers() {
                   </thead>
                   <tbody className="divide-y divide-slate-700/30">
                     {loading ? (
-                      <tr>
-                        <td colSpan="4" className="py-24">
-                          <div className="flex flex-col items-center justify-center gap-4 text-slate-400">
-                            <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
-                            <p className="text-sm font-medium animate-pulse">Fetching users...</p>
-                          </div>
-                        </td>
-                      </tr>
+                      <>
+                        <UserRowSkeleton />
+                        <UserRowSkeleton />
+                        <UserRowSkeleton />
+                      </>
                     ) : filtered.length === 0 ? (
                       <tr>
                         <td colSpan="4" className="py-24 text-center">
@@ -554,10 +652,11 @@ export default function AdminUsers() {
             {/* ── Mobile Card List ── */}
             <div className="md:hidden space-y-3">
               {loading ? (
-                <div className="flex items-center justify-center gap-3 py-12 text-slate-400">
-                  <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
-                  <span className="text-sm">Loading users...</span>
-                </div>
+                <>
+                  <UserCardSkeleton />
+                  <UserCardSkeleton />
+                  <UserCardSkeleton />
+                </>
               ) : filtered.length === 0 ? (
                 <div className="text-center py-12 text-slate-500 text-sm">
                   {search || filterRole !== 'All' ? 'No users match your filter.' : 'No users found.'}

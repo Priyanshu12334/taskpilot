@@ -9,13 +9,41 @@ import Sidebar from '../components/Sidebar';
 
 // Shared socket instance imported above
 
+// Module-level caches to prevent flashing loading states when returning to Chat
+let cachedForUserId = null;
+let cachedMessages = null;
+
+const ChatMessageSkeleton = ({ isSelf }) => (
+  <div className={clsx("flex flex-col max-w-[75%] animate-pulse-subtle", isSelf ? "ml-auto items-end" : "mr-auto items-start")}>
+    {!isSelf && <div className="h-3 w-16 bg-slate-800 rounded mb-1.5 px-1"></div>}
+    <div className={clsx(
+      "relative rounded-2xl px-3 py-2 text-sm shadow-sm min-w-[120px] max-w-[280px] sm:max-w-[400px]",
+      isSelf ? "bg-green-800/40 text-white rounded-br-none" : "bg-violet-900/40 text-slate-100 border border-slate-700/50 rounded-tl-none"
+    )}>
+      <div className="space-y-2">
+        <div className="h-3.5 bg-slate-700/60 rounded w-5/6"></div>
+        <div className="h-3.5 bg-slate-700/60 rounded w-2/3"></div>
+      </div>
+      <div className="h-2.5 w-8 bg-slate-700/60 rounded mt-2.5 self-end ml-auto"></div>
+    </div>
+  </div>
+);
+
 export default function Chat() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Clear user cache if user changes
+  if (cachedForUserId !== user?._id) {
+    cachedMessages = null;
+    cachedForUserId = user?._id;
+  }
+
   const messagesEndRef = useRef(null);
   
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(cachedMessages || []);
+  const [loadingMessages, setLoadingMessages] = useState(!cachedMessages);
   const [inputMessage, setInputMessage] = useState('');
   const [typingUser, setTypingUser] = useState(null);
   const typingTimeoutRef = useRef(null);
@@ -33,8 +61,11 @@ export default function Chat() {
           timestamp: m.createdAt
         }));
         setMessages(history);
+        cachedMessages = history;
       } catch (error) {
         console.error("Failed to load chat history", error);
+      } finally {
+        setLoadingMessages(false);
       }
     };
     fetchMessages();
@@ -42,11 +73,19 @@ export default function Chat() {
     socket.connect();
 
     socket.on('receiveMessage', (messageData) => {
-      setMessages((prev) => [...prev, messageData]);
+      setMessages((prev) => {
+        const next = [...prev, messageData];
+        cachedMessages = next;
+        return next;
+      });
     });
 
     socket.on('messageDeleted', (messageId) => {
-      setMessages((prev) => prev.filter(msg => msg._id !== messageId));
+      setMessages((prev) => {
+        const next = prev.filter(msg => msg._id !== messageId);
+        cachedMessages = next;
+        return next;
+      });
     });
 
     socket.on('userTyping', (name) => {
@@ -144,7 +183,14 @@ export default function Chat() {
 
         {/* Chat Area */}
         <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-4 no-scrollbar">
-          {messages.length === 0 ? (
+          {loadingMessages ? (
+            <div className="space-y-4">
+              <ChatMessageSkeleton isSelf={false} />
+              <ChatMessageSkeleton isSelf={true} />
+              <ChatMessageSkeleton isSelf={false} />
+              <ChatMessageSkeleton isSelf={true} />
+            </div>
+          ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-slate-600 border-2 border-dashed border-slate-800 rounded-2xl">
               <MessageSquare className="w-12 h-12 mb-4 opacity-50" />
               <p>No messages yet. Say hello!</p>

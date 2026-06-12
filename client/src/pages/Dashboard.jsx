@@ -27,16 +27,61 @@ const isDueTomorrow = (date) => {
   return due.getTime() === tomorrow.getTime();
 };
 
+// Module-level caches to prevent flashing loading states when user returns to Dashboard
+let cachedForUserId = null;
+let cachedTasks = null;
+let cachedStats = null;
+let cachedTotalPages = null;
+
+const StatsSkeletonCard = () => (
+  <div className="bg-slate-700/30 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-center shadow-lg shadow-black/10 shimmer-wrapper animate-pulse-subtle min-h-[96px]">
+    <div className="h-3 w-16 bg-slate-700/50 rounded mb-2.5"></div>
+    <div className="h-8 w-12 bg-slate-700/50 rounded"></div>
+  </div>
+);
+
+const TaskSkeleton = () => (
+  <div className="rounded-xl p-5 border border-slate-800 bg-slate-950/20 shadow-lg relative overflow-hidden shimmer-wrapper animate-pulse-subtle">
+    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+      <div className="flex-1 space-y-3">
+        <div className="h-5 w-1/3 bg-slate-800 rounded"></div>
+        <div className="space-y-2">
+          <div className="h-3.5 w-full bg-slate-800 rounded"></div>
+          <div className="h-3.5 w-5/6 bg-slate-800 rounded"></div>
+        </div>
+        <div className="flex flex-wrap items-center gap-3 pt-2">
+          <div className="h-6 w-16 bg-slate-800 rounded-full"></div>
+          <div className="h-6 w-24 bg-slate-800 rounded-full"></div>
+          <div className="h-6 w-28 bg-slate-800 rounded-full"></div>
+        </div>
+      </div>
+      <div className="flex gap-2 shrink-0 self-end sm:self-start">
+        <div className="w-8 h-8 bg-slate-800 rounded-md"></div>
+        <div className="w-8 h-8 bg-slate-800 rounded-md"></div>
+        <div className="w-8 h-8 bg-slate-800 rounded-md"></div>
+      </div>
+    </div>
+  </div>
+);
+
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   // 🛡️ Loading Guard: Ensure user data is available before rendering any dependent logic
   if (!user) return <Loader message="Initializing Dashboard..." />;
+
+  // Clear user cache if user changes (e.g. log out and log in as another user)
+  if (cachedForUserId !== user?._id) {
+    cachedTasks = null;
+    cachedStats = null;
+    cachedTotalPages = null;
+    cachedForUserId = user?._id;
+  }
   
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [tasks, setTasks] = useState([]);
-  const [loadingTasks, setLoadingTasks] = useState(true);
+  const [tasks, setTasks] = useState(cachedTasks || []);
+  const [loadingTasks, setLoadingTasks] = useState(!cachedTasks);
 
   // Form states for creating a new task
   const [title, setTitle] = useState('');
@@ -61,8 +106,8 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('latest');
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [stats, setStats] = useState({ total: 0, pending: 0, completed: 0, inProgress: 0 });
+  const [totalPages, setTotalPages] = useState(cachedTotalPages || 1);
+  const [stats, setStats] = useState(cachedStats || { total: 0, pending: 0, completed: 0, inProgress: 0 });
   const [showReminder, setShowReminder] = useState(false);
   const [urgentTasksCount, setUrgentTasksCount] = useState(0);
   const [selectedHistoryTask, setSelectedHistoryTask] = useState(null);
@@ -143,7 +188,7 @@ export default function Dashboard() {
         if (alertTimer.current) clearTimeout(alertTimer.current);
       };
     }
-  }, [user]);
+  }, [user?._id, user?.role]);
 
   // 1. Fetch Tasks from Backend
   useEffect(() => {
@@ -164,6 +209,11 @@ export default function Dashboard() {
       setTasks(res.data.tasks);
       setTotalPages(res.data.totalPages);
       setStats(res.data.stats);
+
+      // Save to cache
+      cachedTasks = res.data.tasks;
+      cachedStats = res.data.stats;
+      cachedTotalPages = res.data.totalPages;
 
       // Check for tasks due tomorrow or pending tasks (Role-based: only for non-admins)
       if (user?.role?.toLowerCase() !== 'admin') {
@@ -336,6 +386,10 @@ export default function Dashboard() {
       await api.post('/auth/logout');
     } catch (error) {} 
     finally {
+      // Clear cache on logout
+      cachedTasks = null;
+      cachedStats = null;
+      cachedTotalPages = null;
       setTimeout(() => {
         logout();
         navigate('/login', { replace: true });
@@ -440,35 +494,47 @@ export default function Dashboard() {
 
         {/* Stats Cards Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-6 mb-12">
-          {/* Total Tasks */}
-          <div className="bg-slate-700/50 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-center shadow-lg shadow-black/10 transition-all duration-300 hover:scale-[1.02] hover:bg-slate-500/10">
-            <h3 className="text-slate-400 text-[10px] sm:text-xs font-bold mb-1 uppercase tracking-wider">Total Tasks</h3>
-            <p className="text-2xl sm:text-3xl font-bold text-white">{stats.total}</p>
-          </div>
-          
-          {/* Pending Tasks */}
-          <div className="bg-amber-500/20 rounded-2xl p-4 sm:p-5 flex flex-col justify-center shadow-lg shadow-black/10 transition-all duration-300 hover:scale-[1.02] hover:bg-yellow-500/15">
-            <h3 className="text-slate-400 text-[10px] sm:text-xs font-bold mb-1 uppercase tracking-wider">Pending</h3>
-            <p className="text-2xl sm:text-3xl font-bold text-amber-500">{stats.pending}</p>
-          </div>
-          
-          {/* In Progress Tasks */}
-          <div className="bg-sky-500/20 rounded-2xl p-4 sm:p-5 flex flex-col justify-center shadow-lg shadow-black/10 transition-all duration-300 hover:scale-[1.02] hover:bg-sky-500/15">
-            <h3 className="text-slate-400 text-[10px] sm:text-xs font-bold mb-1 uppercase tracking-wider">In Progress</h3>
-            <p className="text-2xl sm:text-3xl font-bold text-sky-500">{stats.inProgress || 0}</p>
-          </div>
-          
-          {/* Completed Tasks */}
-          <div className="bg-emerald-500/20 rounded-2xl p-4 sm:p-5 flex flex-col justify-center shadow-lg shadow-black/10 transition-all duration-300 hover:scale-[1.02] hover:bg-emerald-500/15">
-            <h3 className="text-slate-400 text-[10px] sm:text-xs font-bold mb-1 uppercase tracking-wider">Completed</h3>
-            <p className="text-2xl sm:text-3xl font-bold text-emerald-500">{stats.completed}</p>
-          </div>
-          
-          {/* Overdue Tasks */}
-          <div className="bg-red-500/20 rounded-2xl p-4 sm:p-5 flex flex-col justify-center shadow-lg shadow-black/10 transition-all duration-300 hover:scale-[1.02] hover:bg-red-500/15">
-            <h3 className="text-slate-400 text-[10px] sm:text-xs font-bold mb-1 uppercase tracking-wider">Overdue</h3>
-            <p className="text-2xl sm:text-3xl font-bold text-red-500">{stats.overdue || 0}</p>
-          </div>
+          {loadingTasks ? (
+            <>
+              <StatsSkeletonCard />
+              <StatsSkeletonCard />
+              <StatsSkeletonCard />
+              <StatsSkeletonCard />
+              <StatsSkeletonCard />
+            </>
+          ) : (
+            <>
+              {/* Total Tasks */}
+              <div className="bg-slate-700/50 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-center shadow-lg shadow-black/10 transition-all duration-300 hover:scale-[1.02] hover:bg-slate-500/10">
+                <h3 className="text-slate-400 text-[10px] sm:text-xs font-bold mb-1 uppercase tracking-wider">Total Tasks</h3>
+                <p className="text-2xl sm:text-3xl font-bold text-white">{stats.total}</p>
+              </div>
+              
+              {/* Pending Tasks */}
+              <div className="bg-amber-500/20 rounded-2xl p-4 sm:p-5 flex flex-col justify-center shadow-lg shadow-black/10 transition-all duration-300 hover:scale-[1.02] hover:bg-yellow-500/15">
+                <h3 className="text-slate-400 text-[10px] sm:text-xs font-bold mb-1 uppercase tracking-wider">Pending</h3>
+                <p className="text-2xl sm:text-3xl font-bold text-amber-500">{stats.pending}</p>
+              </div>
+              
+              {/* In Progress Tasks */}
+              <div className="bg-sky-500/20 rounded-2xl p-4 sm:p-5 flex flex-col justify-center shadow-lg shadow-black/10 transition-all duration-300 hover:scale-[1.02] hover:bg-sky-500/15">
+                <h3 className="text-slate-400 text-[10px] sm:text-xs font-bold mb-1 uppercase tracking-wider">In Progress</h3>
+                <p className="text-2xl sm:text-3xl font-bold text-sky-500">{stats.inProgress || 0}</p>
+              </div>
+              
+              {/* Completed Tasks */}
+              <div className="bg-emerald-500/20 rounded-2xl p-4 sm:p-5 flex flex-col justify-center shadow-lg shadow-black/10 transition-all duration-300 hover:scale-[1.02] hover:bg-emerald-500/15">
+                <h3 className="text-slate-400 text-[10px] sm:text-xs font-bold mb-1 uppercase tracking-wider">Completed</h3>
+                <p className="text-2xl sm:text-3xl font-bold text-emerald-500">{stats.completed}</p>
+              </div>
+              
+              {/* Overdue Tasks */}
+              <div className="bg-red-500/20 rounded-2xl p-4 sm:p-5 flex flex-col justify-center shadow-lg shadow-black/10 transition-all duration-300 hover:scale-[1.02] hover:bg-red-500/15">
+                <h3 className="text-slate-400 text-[10px] sm:text-xs font-bold mb-1 uppercase tracking-wider">Overdue</h3>
+                <p className="text-2xl sm:text-3xl font-bold text-red-500">{stats.overdue || 0}</p>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -697,9 +763,10 @@ export default function Dashboard() {
               </div>
               
               {loadingTasks ? (
-                <div className="flex flex-col items-center justify-center h-full text-slate-400 pt-12">
-                  <Loader2 className="w-8 h-8 animate-spin mb-4 text-blue-500" />
-                  <p>Loading tasks...</p>
+                <div className="space-y-5">
+                  <TaskSkeleton />
+                  <TaskSkeleton />
+                  <TaskSkeleton />
                 </div>
               ) : tasks.length === 0 ? (
                 <div className="flex flex-col items-center justify-center text-slate-500 pt-12 border-2 border-dashed border-slate-700 rounded-xl p-8">

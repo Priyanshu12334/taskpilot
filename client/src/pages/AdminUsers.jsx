@@ -74,7 +74,7 @@ function RoleBadge({ role }) {
             : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
     )}>
       {isAdmin ? <Shield className="w-3 h-3" /> : isSimple ? <Clock className="w-3 h-3" /> : <Users className="w-3 h-3" />}
-      {role}
+      {role?.toLowerCase() === 'simpleuser' ? 'pendingUser' : role}
     </span>
   );
 }
@@ -485,7 +485,7 @@ export default function AdminUsers() {
                 </>
               ) : (
                 [{ label: 'Total Users', val: stats.totalUsers, color: 'slate' },
-                  { label: 'Simple User', val: stats.simpleUsers, color: 'yellow' },
+                  { label: 'Pending User', val: stats.simpleUsers, color: 'yellow' },
                   { label: 'Team Members', val: stats.members, color: 'emerald' },
                   { label: 'Admins', val: stats.admins, color: 'blue' },
                   { label: 'Blocked', val: stats.blockedUsers, color: 'red' }
@@ -547,7 +547,7 @@ export default function AdminUsers() {
                         : 'text-slate-500 hover:text-slate-300 border-transparent'
                     )}
                   >
-                    {r === 'simpleUser' ? 'SimpleUser' : r.charAt(0).toUpperCase() + r.slice(1)}
+                    {r === 'simpleUser' ? 'pendingUser' : r.charAt(0).toUpperCase() + r.slice(1)}
                   </button>
                 ))}
               </div>

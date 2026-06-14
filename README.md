@@ -8,7 +8,7 @@ TaskPilot is a full-stack MERN application for team collaboration and task manag
 * Task Creation and Management
 * Task Assignment
 * Team Chat using Socket.IO
-* Dashboard with Task Statistics
+* Dashboard with Task Statistics & Weekly Task Activity Analytics
 * User Roles and Permissions
 * Responsive User Interface
 
@@ -21,6 +21,7 @@ TaskPilot is a full-stack MERN application for team collaboration and task manag
 * Tailwind CSS
 * Axios
 * React Router
+* Recharts
 
 ### Backend
 
@@ -30,6 +31,12 @@ TaskPilot is a full-stack MERN application for team collaboration and task manag
 * Mongoose
 * JWT Authentication
 * Socket.IO
+
+### DevOps & Deployment
+* Docker
+* Docker Compose
+* Vercel
+* Render
 
 ## Project Structure
 

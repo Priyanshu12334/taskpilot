@@ -82,6 +82,17 @@ export default function NotificationDropdown() {
         const now = Date.now();
         localStorage.setItem(`lastRead_${user._id}`, now);
         setLastReadTimestamp(now);
+
+        // Auto mark all unread registration notifications as read in DB and state
+        const unreadRegs = safeNotifications.filter(n => n.type === 'registration' && !n.isRead);
+        if (unreadRegs.length > 0) {
+          try {
+            setNotifications(prev => prev.map(n => n.type === 'registration' ? { ...n, isRead: true } : n));
+            await api.patch('/notifications/read-all');
+          } catch (err) {
+            console.error('Failed to mark admin registration notifications as read', err);
+          }
+        }
       } else {
         try {
           setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));

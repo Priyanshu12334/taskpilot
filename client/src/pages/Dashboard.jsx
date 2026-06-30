@@ -85,6 +85,12 @@ export default function Dashboard() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [tasks, setTasks] = useState(cachedTasks || []);
   const [loadingTasks, setLoadingTasks] = useState(!cachedTasks);
+  const displayTasks = tasks.filter(task => {
+    if (user?.role?.toLowerCase() === 'admin') return true;
+    const taskCreatorId = task.user?._id || task.user;
+    const taskAssigneeId = task.assignedTo?._id || task.assignedTo;
+    return taskCreatorId === user?._id || taskAssigneeId === user?._id;
+  });
   const [weeklyActivity, setWeeklyActivity] = useState(cachedWeeklyActivity || []);
   const [loadingWeekly, setLoadingWeekly] = useState(!cachedWeeklyActivity);
   const [chartError, setChartError] = useState('');
@@ -443,7 +449,7 @@ export default function Dashboard() {
             <h1 className="text-2xl font-bold text-white mb-2">Hi, <span className="text-emerald-500">{user?.name || 'User'}</span></h1>
             <p className="text-slate-400 text-sm font-medium">
               {user?.role?.toLowerCase() === 'simpleuser' 
-                ? 'Your account has limited access. Contact an admin to unlock more features.'
+                ? "Your account is awaiting admin approval. You'll get full access once your account is approved."
                 : 'Here are your active tasks for today.'}
             </p>
           </div>
@@ -478,28 +484,42 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* 🛡️ LIMITED ACCESS BANNER */}
+        {/* 🔒 PENDING APPROVAL BANNER */}
         {user?.role?.toLowerCase() === 'simpleuser' && (
           <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-500">
-            <div className="bg-yellow-500/10 border border-yellow-400/20 rounded-2xl p-5 flex items-center justify-between shadow-[0_0_15px_rgba(251,146,60,0.05)]">
-              <div className="flex items-center gap-4">
+            <div className="bg-yellow-500/10 border border-yellow-400/20 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[0_0_15px_rgba(251,146,60,0.05)]">
+              <div className="flex items-start sm:items-center gap-4">
                 <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center shrink-0">
                   <Lock className="w-6 h-6 text-yellow-500" />
                 </div>
                 <div>
-                  <h4 className="text-lg font-bold text-yellow-400">Limited Access Active</h4>
+                  <h4 className="text-lg font-bold text-yellow-400">🔒 Pending Approval</h4>
                   <p className="text-sm text-slate-400">
-                    You cannot create or assign tasks yet. 
-                    <span className="text-yellow-200/60 ml-1">An administrator needs to promote your account to 'Member'.</span>
+                    Your account is awaiting admin approval. Full access to task management and team chat will be unlocked after approval. If you need faster verification, you can contact the administrator.
                   </p>
                 </div>
+              </div>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 w-full sm:w-auto">
+                <button
+                  onClick={() => navigate('/contact')}
+                  className="px-4 py-2 bg-yellow-500 hover:bg-yellow-400 text-slate-950 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition active:scale-95 whitespace-nowrap shadow-lg shadow-yellow-500/10"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  Contact Admin
+                </button>
+                <button
+                  disabled
+                  className="px-4 py-2 bg-slate-800 border border-slate-700 text-slate-400 text-xs font-bold rounded-xl cursor-not-allowed select-none whitespace-nowrap text-center animate-pulse-subtle"
+                >
+                  Status: Pending Approval
+                </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* One-time Urgency Toast (Hidden for Admin) */}
-        {showReminder && user?.role?.toLowerCase() !== 'admin' && (
+        {/* One-time Urgency Toast (Hidden for Admin/Pending User) */}
+        {showReminder && user?.role?.toLowerCase() !== 'admin' && user?.role?.toLowerCase() !== 'simpleuser' && (
           <div className="mb-6 animate-in fade-in slide-in-from-top-4 duration-500">
             <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex items-center justify-between shadow-[0_0_15px_rgba(245,158,11,0.05)]">
               <div className="flex items-center gap-3">
@@ -585,9 +605,16 @@ export default function Dashboard() {
               <p>{chartError}</p>
             </div>
           ) : weeklyActivity.every(d => d.count === 0) ? (
-            <div className="h-64 flex flex-col items-center justify-center bg-slate-950/20 rounded-xl border border-slate-800 text-slate-500">
+            <div className="h-64 flex flex-col items-center justify-center bg-slate-950/20 rounded-xl border border-slate-800 text-slate-500 text-center px-4">
               <Calendar className="w-10 h-10 mb-2 opacity-30" />
-              <p className="text-sm font-medium">{emptyStateMessage}</p>
+              {user?.role?.toLowerCase() === 'simpleuser' ? (
+                <>
+                  <p className="text-sm font-bold text-slate-300">No task activity yet.</p>
+                  <p className="text-xs text-slate-500 mt-1 max-w-sm">Analytics will appear after your account is approved and tasks are assigned.</p>
+                </>
+              ) : (
+                <p className="text-sm font-medium">{emptyStateMessage}</p>
+              )}
             </div>
           ) : (
             <div className="h-64 w-full">
@@ -865,20 +892,17 @@ export default function Dashboard() {
                   <TaskSkeleton />
                   <TaskSkeleton />
                 </div>
-              ) : tasks.length === 0 ? (
-                <div className="flex flex-col items-center justify-center text-slate-500 pt-12 border-2 border-dashed border-slate-700 rounded-xl p-8">
-                  <p>No tasks found. Tasks created will appear here.</p>
+              ) : displayTasks.length === 0 ? (
+                <div className="flex flex-col items-center justify-center text-slate-500 pt-12 border-2 border-dashed border-slate-700 rounded-xl p-8 text-center">
+                  <p>
+                    {user?.role?.toLowerCase() === 'simpleuser'
+                      ? "No tasks assigned yet. Please wait for admin approval."
+                      : "No tasks found. Tasks created will appear here."}
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-5">
-                  {tasks
-                    .filter(task => {
-                      if (user?.role?.toLowerCase() === 'admin') return true;
-                      const taskCreatorId = task.user?._id || task.user;
-                      const taskAssigneeId = task.assignedTo?._id || task.assignedTo;
-                      return taskCreatorId === user?._id || taskAssigneeId === user?._id;
-                    })
-                    .map(task => {
+                  {displayTasks.map(task => {
                     const todayDate = new Date();
                     todayDate.setHours(0,0,0,0);
                     const tomorrowDate = new Date(todayDate);
@@ -1158,7 +1182,7 @@ export default function Dashboard() {
                         </div>
                       )}
                     </div>
-                  )}) }
+                  )})}
                   
                   {/* Pagination Controls */}
                   {totalPages > 1 && (

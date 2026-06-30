@@ -61,6 +61,40 @@ const loginUser = async (req, res) => {
       // Backward compatibility: If user is Pending, they are now simpleUser
       const effectiveRole = user.role?.toLowerCase() === 'pending' ? 'simpleUser' : user.role;
 
+      // Send notification to admins if user has simpleUser role (Pending Approval) on their login
+      if (effectiveRole?.toLowerCase() === 'simpleuser') {
+        try {
+          const User = require('../models/User');
+          const Notification = require('../models/Notification');
+          const message = `${user.name} has registered and is waiting for approval.`;
+          
+          const existingNotif = await Notification.findOne({
+            message,
+            type: 'registration'
+          });
+
+          if (!existingNotif) {
+            const admins = await User.find({ role: { $in: ['admin', 'Admin'] } });
+            const io = req.app.get('io');
+
+            for (const admin of admins) {
+              const notif = await Notification.create({
+                user: admin._id,
+                message,
+                type: 'registration',
+                isRead: false
+              });
+
+              if (io) {
+                io.emit(`notification_${admin._id}`, notif);
+              }
+            }
+          }
+        } catch (notifError) {
+          console.error("Failed to create login notification:", notifError);
+        }
+      }
+
       res.json({
         _id: user._id,
         name: user.name,

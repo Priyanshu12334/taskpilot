@@ -31,7 +31,18 @@ const getNotifications = async (req, res) => {
           }
         }
       ]);
-      return res.status(200).json(completionLogs);
+      
+      // Fetch stored registration notifications for admin
+      const registrationNotifications = await Notification.find({
+        user: req.user._id,
+        type: 'registration'
+      }).lean();
+
+      // Combine and sort by createdAt descending
+      const allNotifications = [...completionLogs, ...registrationNotifications];
+      allNotifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      return res.status(200).json(allNotifications);
     }
 
     // Default behavior for Members: Use existing Notification model

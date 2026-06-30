@@ -6,10 +6,12 @@ import api from '../services/api';
 import clsx from 'clsx';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import { useNavigate } from 'react-router-dom';
 dayjs.extend(relativeTime);
 
 export default function NotificationDropdown() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -21,6 +23,9 @@ export default function NotificationDropdown() {
 
   const safeNotifications = Array.isArray(notifications) ? notifications : [];
   const unreadCount = safeNotifications.filter(n => {
+    if (n.type === 'registration') {
+      return !n.isRead;
+    }
     if (user?.role?.toLowerCase() === 'admin') {
       return new Date(n.createdAt).getTime() > lastReadTimestamp;
     }
@@ -101,6 +106,16 @@ export default function NotificationDropdown() {
     }
   };
 
+  const handleNotificationClick = async (notif) => {
+    if (notif.type === 'registration') {
+      if (!notif.isRead) {
+        await markAsRead(notif._id);
+      }
+      setIsOpen(false);
+      navigate('/admin/users');
+    }
+  };
+
 
 
   if (!isAllowed) return null;
@@ -133,40 +148,62 @@ export default function NotificationDropdown() {
                 <p className="text-sm">No notifications yet</p>
               </div>
             ) : (
-              notifications.map((notif) => (
-                <div 
-                  key={notif._id}
-                  className={clsx(
-                    "p-4 border-b border-slate-700 last:border-0 transition-colors",
-                    !notif.isRead ? "bg-emerald-500/5 hover:bg-emerald-500/10" : "hover:bg-slate-700/30"
-                  )}
-                >
-                  <div className="flex justify-between items-start gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className={clsx(
-                        "text-sm leading-snug break-words",
-                        (user?.role?.toLowerCase() === 'admin' ? new Date(notif.createdAt).getTime() > lastReadTimestamp : !notif.isRead) 
-                          ? "text-slate-100 font-medium" 
-                          : "text-slate-400"
-                      )}>
-                        {notif.message}
-                      </p>
-                      <span className="text-[10px] text-slate-500 mt-1 block">
-                        {dayjs(notif.createdAt).fromNow()}
-                      </span>
-                    </div>
-                    {notif.type !== 'completion' && !notif.isRead && (
-                      <button
-                        onClick={() => markAsRead(notif._id)}
-                        className="p-1 text-emerald-400 hover:bg-emerald-500/20 rounded-lg transition-colors"
-                        title="Mark as read"
-                      >
-                        <Check className="w-3 h-3" />
-                      </button>
+              notifications.map((notif) => {
+                const isUnread = notif.type === 'registration' 
+                  ? !notif.isRead 
+                  : (user?.role?.toLowerCase() === 'admin' 
+                      ? new Date(notif.createdAt).getTime() > lastReadTimestamp 
+                      : !notif.isRead);
+
+                return (
+                  <div 
+                    key={notif._id}
+                    className={clsx(
+                      "p-4 border-b border-slate-700 last:border-0 transition-colors",
+                      isUnread ? "bg-emerald-500/5 hover:bg-emerald-500/10" : "hover:bg-slate-700/30"
                     )}
+                  >
+                    <div className="flex justify-between items-start gap-3">
+                      <div 
+                        className={clsx("flex-1 min-w-0", notif.type === 'registration' && "cursor-pointer")}
+                        onClick={() => notif.type === 'registration' && handleNotificationClick(notif)}
+                      >
+                        {notif.type === 'registration' && (
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                              New Pending User
+                            </span>
+                            {isUnread && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                            )}
+                          </div>
+                        )}
+                        <p className={clsx(
+                          "text-sm leading-snug break-words",
+                          isUnread ? "text-slate-100 font-medium" : "text-slate-400"
+                        )}>
+                          {notif.message}
+                        </p>
+                        <span className="text-[10px] text-slate-500 mt-1 block">
+                          {dayjs(notif.createdAt).fromNow()}
+                        </span>
+                      </div>
+                      {notif.type !== 'completion' && isUnread && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            markAsRead(notif._id);
+                          }}
+                          className="p-1 text-emerald-400 hover:bg-emerald-500/20 rounded-lg transition-colors shrink-0"
+                          title="Mark as read"
+                        >
+                          <Check className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

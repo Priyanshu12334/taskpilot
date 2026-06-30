@@ -41,7 +41,6 @@ function SidebarItem({ path, icon: Icon, label, onClick, disabled, lockedMessage
     return (
       <li className="relative group/item list-none">
         <button
-          onClick={() => alert(lockedMessage || "Access Restricted")}
           className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-slate-200 opacity-60 cursor-not-allowed transition-all duration-200"
         >
           {content(false)}
@@ -145,7 +144,7 @@ const SidebarContent = ({ user, navItems, setOpen, handleLogout, isLoggingOut })
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold truncate text-white tracking-wide">{user?.name}</p>
-          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">{user?.role}</p>
+          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">{user?.role?.toLowerCase() === 'simpleuser' ? 'PENDING USER' : user?.role}</p>
         </div>
       </div>
 

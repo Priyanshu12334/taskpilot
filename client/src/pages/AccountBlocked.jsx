@@ -20,7 +20,7 @@ export default function AccountBlocked() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 relative">
       
       {/* Background Glow */}
       <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-red-600/10 blur-[150px] pointer-events-none" />

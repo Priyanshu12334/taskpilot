@@ -438,12 +438,12 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-800 to-slate-900 text-white flex overflow-hidden relative">
+    <div className="min-h-screen sm:h-screen bg-gradient-to-br from-slate-800 to-slate-900 text-white flex flex-col sm:flex-row sm:overflow-hidden relative">
 
       <Sidebar />
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto no-scrollbar h-full pt-40 sm:pt-10 p-5 sm:p-14 relative">
+      <main className="flex-1 sm:overflow-y-auto no-scrollbar min-h-screen sm:h-full pt-40 sm:pt-10 p-5 sm:p-14 relative">
         <header className="mb-10 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white mb-2">Hi, <span className="text-emerald-500">{user?.name || 'User'}</span></h1>

@@ -443,11 +443,11 @@ export default function AdminUsers() {
     <>
       <Toast toasts={toasts} removeToast={removeToast} />
 
-      <div className="h-screen bg-gradient-to-br from-slate-800 to-slate-900 text-white flex overflow-hidden relative">
+      <div className="min-h-screen sm:h-screen bg-gradient-to-br from-slate-800 to-slate-900 text-white flex flex-col sm:flex-row sm:overflow-hidden relative">
 
         <Sidebar />
 
-        <main className="flex-1 overflow-y-auto no-scrollbar h-full pt-40 sm:pt-0 relative">
+        <main className="flex-1 sm:overflow-y-auto no-scrollbar min-h-screen sm:h-full pt-40 sm:pt-0 relative">
           <div className="p-4 sm:p-12 max-w-7xl mx-auto w-full">
 
             {/* Header Section */}

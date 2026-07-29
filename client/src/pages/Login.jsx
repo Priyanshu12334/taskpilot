@@ -43,7 +43,7 @@ export default function Login() {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-600 via-slate-900 to-slate-800 animate-gradient flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-600 via-slate-900 to-slate-800 animate-gradient flex items-center justify-center p-4 relative">
       <div className="w-full max-w-[400px] bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl p-6 sm:p-8 relative z-10 box-border">
         <div className="text-center mb-5">
           <div className="bg-gradient-to-br from-slate-700 to-slate-700 w-12 h-12 rounded-3xl mx-auto flex items-center justify-center mb-3 shadow-lg shadow-black/50 border border-slate-700/50">

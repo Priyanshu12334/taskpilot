@@ -4,13 +4,17 @@ TaskPilot is a full-stack MERN application for team collaboration and task manag
 
 ## Features
 
-* User Authentication (JWT)
-* Task Creation and Management
-* Task Assignment
-* Team Chat using Socket.IO
-* Dashboard with Task Statistics & Weekly Task Activity Analytics
-* User Roles and Permissions
-* Responsive User Interface
+* 🔐 Secure Authentication & Authorization using JWT
+* 👥 Role-Based Access Control (Admin, Pending User, Team Member)
+* ✅ Admin Approval System for New User Registration
+* 📋 Task Creation, Assignment & Management (Admin Only)
+* 👨‍💻 Team Members can View, Update and Complete Assigned Tasks
+* 💬 Realtime Team Chat powered by Socket.IO
+* 🔔 Realtime Notifications for Task Assignments and Updates
+* 📊 Dashboard with Task Statistics & Weekly Task Activity Analytics
+* 👤 User Profile Management
+* 📱 Fully Responsive Design for Desktop, Tablet & Mobile
+* ⚡ Fast and Modern User Experience
 
 ## Tech Stack
 
@@ -117,9 +121,8 @@ docker compose down
 
 ## Live Demo
 
-* Frontend: https://taskpilot-ivory.vercel.app
+* Live Demo: https://taskpilot-ivory.vercel.app
 
-* Backend API: https://taskpilot-backend-0lk1.onrender.com
 
 ## Default Ports
 

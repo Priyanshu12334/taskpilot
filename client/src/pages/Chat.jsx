@@ -166,12 +166,12 @@ export default function Chat() {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-800 to-slate-900 text-white flex overflow-hidden relative">
+    <div className="min-h-screen sm:h-screen bg-gradient-to-br from-slate-800 to-slate-900 text-white flex flex-col sm:flex-row sm:overflow-hidden relative">
       
       <Sidebar />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col overflow-y-auto no-scrollbar h-full pt-40 md:pt-8 p-2 sm:p-10 relative overflow-hidden">
+      <main className="flex-1 flex flex-col sm:overflow-y-auto no-scrollbar min-h-screen sm:h-full pt-40 md:pt-8 p-2 sm:p-10 relative">
         <header className="p-4 sm:p-2 flex items-center justify-between shrink-0 border-b border-slate-800/50">
           <div>
             <h2 className="text-2xl font-bold mb-1">

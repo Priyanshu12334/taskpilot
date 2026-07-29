@@ -12,7 +12,7 @@ export default function Landing() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-600 via-slate-900 to-slate-600 animate-gradient text-white overflow-hidden relative font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-slate-600 via-slate-900 to-slate-600 animate-gradient text-white relative font-sans">
 
       {/* Navbar Grid Layout */}
       <div className="max-w-7xl mx-auto">

@@ -7,14 +7,14 @@ export default function AccessRestricted() {
   const navigate = useNavigate();
 
   return (
-    <div className="h-screen bg-slate-900 text-white flex overflow-hidden relative">
+    <div className="min-h-screen sm:h-screen bg-slate-900 text-white flex flex-col sm:flex-row sm:overflow-hidden relative">
       {/* Background Decorative Blur */}
       <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/10 blur-[150px] pointer-events-none" />
       <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/10 blur-[150px] pointer-events-none" />
 
       <Sidebar />
 
-      <main className="flex-1 flex items-center justify-center p-6 relative z-10 overflow-y-auto no-scrollbar">
+      <main className="flex-1 flex items-center justify-center p-6 relative z-10 min-h-screen sm:h-full no-scrollbar">
         <div className="max-w-md w-full text-center space-y-8 animate-[slideIn_0.4s_ease-out]">
           
           {/* Icon Composition */}

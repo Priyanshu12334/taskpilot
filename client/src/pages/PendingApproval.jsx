@@ -35,7 +35,7 @@ export default function PendingApproval() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center p-6 relative">
       {/* Background Glow */}
       <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/10 blur-[150px] pointer-events-none" />
       <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/10 blur-[150px] pointer-events-none" />

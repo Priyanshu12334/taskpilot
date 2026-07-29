@@ -10,17 +10,22 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const refreshProfile = async () => {
+    const storedUser = localStorage.getItem('userInfo');
+    if (!storedUser) return null;
+
     try {
+      const parsed = JSON.parse(storedUser);
+      if (!parsed || !parsed.token) return null;
+
+      console.log('[AuthContext] 🔄 Syncing profile with backend...');
       const res = await api.get('/auth/profile');
-      const storedUser = localStorage.getItem('userInfo');
-      const parsed = storedUser ? JSON.parse(storedUser) : {};
-      
       const refreshed = { ...parsed, ...res.data };
       setUser(refreshed);
       localStorage.setItem('userInfo', JSON.stringify(refreshed));
       return refreshed;
     } catch (err) {
-      if (err.response?.data?.errorCode === 'ACCOUNT_BLOCKED') {
+      if (err.response?.status === 401 || err.response?.data?.errorCode === 'ACCOUNT_BLOCKED') {
+        console.warn('[AuthContext] 🔒 401/Blocked on profile refresh. Logging out...');
         logout();
         return null;
       }
@@ -33,16 +38,31 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const storedUser = localStorage.getItem('userInfo');
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
-      refreshProfile(); // Immediate sync on mount
+      try {
+        const parsed = JSON.parse(storedUser);
+        if (parsed && parsed.token) {
+          setUser(parsed);
+          console.log('[AuthContext] 👤 User restored from localStorage:', parsed.name);
+          refreshProfile(); // Sync profile if valid token exists
+        } else {
+          localStorage.removeItem('userInfo');
+        }
+      } catch (e) {
+        localStorage.removeItem('userInfo');
+      }
     }
     setLoading(false);
 
     // Dynamic Permission Sync: Refresh profile periodically (every 30s)
-    // This ensures "Team Chat" appears/disappears near-realtime after Admin action
     const interval = setInterval(() => {
-      if (localStorage.getItem('userInfo')) {
-        refreshProfile();
+      const stored = localStorage.getItem('userInfo');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed && parsed.token) {
+            refreshProfile();
+          }
+        } catch (e) {}
       }
     }, 30000); 
 

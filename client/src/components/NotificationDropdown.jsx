@@ -35,7 +35,10 @@ export default function NotificationDropdown() {
   const isAllowed = ['admin', 'member'].includes(user?.role?.toLowerCase());
 
   useEffect(() => {
-    if (!user || !isAllowed) return;
+    const userInfo = localStorage.getItem('userInfo');
+    if (!user || !isAllowed || !userInfo) return;
+    const { token } = JSON.parse(userInfo || '{}');
+    if (!token) return;
 
     fetchNotifications();
 
@@ -60,9 +63,14 @@ export default function NotificationDropdown() {
   }, [user, isAllowed]);
 
   const fetchNotifications = async () => {
-    if (!isAllowed) return;
+    const userInfo = localStorage.getItem('userInfo');
+    if (!isAllowed || !userInfo) return;
+    const { token } = JSON.parse(userInfo || '{}');
+    if (!token) return;
+
     try {
       setLoading(true);
+      console.log('[NotificationDropdown] 🔔 Fetching notifications...');
       const res = await api.get('/notifications');
       setNotifications(res.data);
     } catch (err) {

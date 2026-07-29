@@ -6,7 +6,7 @@ TaskPilot is a full-stack MERN application for team collaboration and task manag
 
 * 🔐 Secure Authentication & Authorization using JWT
 * 👥 Role-Based Access Control (Admin, Pending User, Team Member)
-* ✅ Admin Approval System for New User Registration
+* ✅ Admin Approval Workflow for New User Registration (Pending User → Team Member)
 * 📋 Task Creation, Assignment & Management (Admin Only)
 * 👨‍💻 Team Members can View, Update and Complete Assigned Tasks
 * 💬 Realtime Team Chat powered by Socket.IO

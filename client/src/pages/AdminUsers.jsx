@@ -184,9 +184,14 @@ export default function AdminUsers() {
 
   // ── Fetch users ──
   const fetchUsers = async (isRefresh = false) => {
-    if (!user || user.role?.toLowerCase() !== 'admin') return;
+    const userInfo = localStorage.getItem('userInfo');
+    if (!user || user.role?.toLowerCase() !== 'admin' || !userInfo) return;
+    const { token } = JSON.parse(userInfo || '{}');
+    if (!token) return;
+
     if (isRefresh) setRefreshing(true); else setLoading(true);
     try {
+      console.log('[AdminUsers] 👥 Fetching user list...');
       const res = await api.get('/user/all');
       setUsers(res.data);
       cachedUsers = res.data;
@@ -199,8 +204,13 @@ export default function AdminUsers() {
   };
 
   const fetchStats = async () => {
-    if (!user || user.role?.toLowerCase() !== 'admin') return;
+    const userInfo = localStorage.getItem('userInfo');
+    if (!user || user.role?.toLowerCase() !== 'admin' || !userInfo) return;
+    const { token } = JSON.parse(userInfo || '{}');
+    if (!token) return;
+
     try {
+      console.log('[AdminUsers] 📊 Fetching admin stats...');
       const res = await api.get('/admin/stats');
       setStats(res.data);
       cachedAdminStats = res.data;

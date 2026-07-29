@@ -213,7 +213,13 @@ export default function Dashboard() {
   }, [currentPage, filter, sortOrder, searchQuery]);
 
   const fetchTasks = async () => {
+    const userInfo = localStorage.getItem('userInfo');
+    if (!userInfo) return;
+    const { token } = JSON.parse(userInfo || '{}');
+    if (!token) return;
+
     try {
+      console.log('[Dashboard] 📋 Fetching tasks...');
       const res = await api.get('/tasks', {
         params: {
           page: currentPage,
@@ -264,7 +270,13 @@ export default function Dashboard() {
   };
 
   const fetchWeeklyActivity = async () => {
+    const userInfo = localStorage.getItem('userInfo');
+    if (!userInfo) return;
+    const { token } = JSON.parse(userInfo || '{}');
+    if (!token) return;
+
     try {
+      console.log('[Dashboard] 📈 Fetching weekly activity...');
       const res = await api.get('/tasks/weekly-activity');
       setWeeklyActivity(res.data);
       cachedWeeklyActivity = res.data;

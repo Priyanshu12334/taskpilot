@@ -70,7 +70,23 @@ const updatePassword = async (req, res) => {
 // @access  Private
 const getAllUsers = async (req, res) => {
   try {
+    if (req.query.assignable === 'true' || req.query.role === 'member') {
+      const users = await userService.getAssignableUsers();
+      return res.json(users);
+    }
     const users = await userService.getAllUsers();
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get assignable members for task assignment dropdown
+// @route   GET /api/user/assignable
+// @access  Private
+const getAssignableUsers = async (req, res) => {
+  try {
+    const users = await userService.getAssignableUsers();
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -131,4 +147,4 @@ const updateUserChatAccess = async (req, res) => {
   }
 };
 
-module.exports = { updateProfile, updatePassword, getAllUsers, updateUserRole, updateUserChatAccess };
+module.exports = { updateProfile, updatePassword, getAllUsers, getAssignableUsers, updateUserRole, updateUserChatAccess };

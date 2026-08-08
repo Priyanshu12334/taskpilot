@@ -1,5 +1,5 @@
 const express = require('express');
-const { updateProfile, updatePassword, getAllUsers, updateUserRole, updateUserChatAccess } = require('../controllers/userController');
+const { updateProfile, updatePassword, getAllUsers, getAssignableUsers, updateUserRole, updateUserChatAccess } = require('../controllers/userController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -8,6 +8,7 @@ const router = express.Router();
 router.put('/update', protect, updateProfile);
 router.put('/password', protect, updatePassword);
 router.get('/all', protect, getAllUsers);
+router.get('/assignable', protect, getAssignableUsers);
 router.patch('/:id/role', protect, admin, updateUserRole);
 router.patch('/:id/chat-access', protect, admin, updateUserChatAccess);
 

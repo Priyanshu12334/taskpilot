@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Plus, Edit2, Trash2, Check, User, AlertTriangle, X, History, Clock, RefreshCw, CheckCircle2, UserPlus, MessageSquare, Send, Lock, LayoutGrid, Calendar } from 'lucide-react';
+import { Loader2, Plus, Edit2, Trash2, Check, User, AlertTriangle, X, History, Clock, RefreshCw, ChevronDown, CheckCircle2, UserPlus, MessageSquare, Send, Lock, LayoutGrid, Calendar } from 'lucide-react';
 import api from '../services/api';
 import { socket } from '../socket';
 import clsx from 'clsx';
@@ -170,17 +170,20 @@ export default function Dashboard() {
     setCurrentPage(1);
   }, [filter, searchQuery, sortOrder]);
 
-  // Fetch users for assignments
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const res = await api.get('/user/all');
-        setUsersList(res.data);
-      } catch (err) { }
-    };
-    fetchUsers();
+  // Fetch users for assignments (Only approved Members)
+  const fetchUsers = async () => {
+    try {
+      const res = await api.get('/user/assignable');
+      setUsersList(res.data);
+    } catch (err) { }
+  };
 
-    // Listen for completion alerts (Admin only)
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  // Listen for completion alerts (Admin only)
+  useEffect(() => {
     if (user?.role?.toLowerCase() === 'admin') {
       socket.on('taskCompletedAlert', (data) => {
         if (data.userId !== user._id) {
@@ -609,7 +612,7 @@ export default function Dashboard() {
             <Calendar className="w-5 h-5 text-emerald-400" /> {chartTitle}
           </h2>
           {loadingWeekly ? (
-            <div className="h-64 flex items-center justify-center bg-slate-950/20 rounded-xl border border-slate-800 animate-pulse-subtle shimmer-wrapper">
+            <div className="h-64 flex items-center justify-center bg-transparent rounded-xl border border-slate-800 animate-pulse-subtle shimmer-wrapper">
               <div className="text-slate-500 text-sm font-medium">Loading activity chart...</div>
             </div>
           ) : chartError ? (
@@ -617,7 +620,7 @@ export default function Dashboard() {
               <p>{chartError}</p>
             </div>
           ) : weeklyActivity.every(d => d.count === 0) ? (
-            <div className="h-64 flex flex-col items-center justify-center bg-slate-950/20 rounded-xl border border-slate-800 text-slate-500 text-center px-4">
+            <div className="h-64 flex flex-col items-center justify-center bg-transparent rounded-xl border border-slate-800 text-slate-500 text-center px-4">
               <Calendar className="w-10 h-10 mb-2 opacity-30" />
               {user?.role?.toLowerCase() === 'simpleuser' ? (
                 <>
@@ -673,104 +676,121 @@ export default function Dashboard() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
+        <div>
           {/* Add Task Form Section */}
           {user?.role?.toLowerCase() === 'admin' && (
-          <div className="lg:col-span-1">
-            <div className="bg-slate-900 border-slate-900/50 rounded-2xl p-6 shadow-lg">
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <Plus className="w-5 h-5 text-emerald-400" /> Create Task
-              </h2>
-              
-              {taskError && (
-                <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-3 py-2 rounded-lg text-sm mb-4">
-                  {taskError}
-                </div>
-              )}
-              
-              <form onSubmit={handleAddTask} className="space-y-6">
+          <div className="bg-slate-900 border border-slate-700/50 rounded-2xl p-6 shadow-lg mb-8">
+            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+              <Plus className="w-5 h-5 text-emerald-400" /> Create Task
+            </h2>
+            
+            {taskError && (
+              <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-3 py-2 rounded-lg text-sm mb-4">
+                {taskError}
+              </div>
+            )}
+            
+            <form onSubmit={handleAddTask} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-[2fr_2fr_1fr] gap-6 items-start">
+                {/* Row 1 Col 1: Task Title */}
                 <div>
                   <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Task Title</label>
-                  <input
-                    type="text"
+                  <textarea
                     required
+                    rows={3}
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                     placeholder="e.g. Design homepage"
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-200 outline-none"
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-200 outline-none min-h-[80px] resize-none overflow-y-auto"
                   />
                 </div>
+
+                {/* Row 1 Col 2: Description */}
                 <div>
                   <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Description</label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Add details..."
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-200 outline-none min-h-[120px] resize-none overflow-y-auto"
+                    rows={3}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-200 outline-none min-h-[80px] resize-none overflow-y-auto"
                   />
                 </div>
-                  <div className="relative" ref={statusRef}>
-                    <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Status</label>
-                    <button
-                      type="button"
-                      onClick={() => setIsStatusOpen(!isStatusOpen)}
-                      className="w-full flex items-center justify-between bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-200 outline-none"
-                    >
-                      {status}
-                      <Clock className={clsx("w-4 h-4 transition-transform", isStatusOpen && "rotate-180")} />
-                    </button>
-                    
-                    {isStatusOpen && (
-                      <div className="absolute left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                        <div className="max-h-48 overflow-y-auto no-scrollbar">
-                          {[
-                            { val: 'Pending', color: 'hover:bg-amber-500/10 hover:text-amber-400' },
-                            { val: 'In Progress', color: 'hover:bg-sky-500/10 hover:text-sky-400' },
-                            { val: 'Completed', color: 'hover:bg-emerald-500/10 hover:text-emerald-400' }
-                          ].map(opt => (
-                            <button
-                              key={opt.val}
-                              type="button"
-                              onClick={() => { setStatus(opt.val); setIsStatusOpen(false); }}
-                              className={clsx(
-                                "w-full text-left px-4 py-2.5 text-sm font-medium transition-colors border-b border-slate-700/50 last:border-0",
-                                status === opt.val ? "bg-slate-700 text-white" : "text-slate-300",
-                                opt.color
-                              )}
-                            >
-                              {opt.val}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="relative" ref={assignRef}>
-                    <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Assign To</label>
-                    <button
-                      type="button"
-                      onClick={() => setIsAssignOpen(!isAssignOpen)}
-                      className="w-full flex items-center justify-between bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-200 outline-none"
-                    >
-                      <span className="truncate">{usersList.find(u => u._id === assignedTo)?.name || "Unassigned"}</span>
-                      <User className={clsx("w-4 h-4 transition-transform", isAssignOpen && "scale-110")} />
-                    </button>
-                    
-                    {isAssignOpen && (
-                      <div className="absolute left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                        <div className="max-h-48 overflow-y-auto no-scrollbar">
+
+                {/* Row 1 Col 3: Status */}
+                <div className="relative" ref={statusRef}>
+                  <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Status</label>
+                  <button
+                    type="button"
+                    onClick={() => setIsStatusOpen(!isStatusOpen)}
+                    className="w-full flex items-center justify-between bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-200 outline-none min-h-[80px]"
+                  >
+                    {status}
+                    <Clock className={clsx("w-4 h-4 transition-transform", isStatusOpen && "rotate-180")} />
+                  </button>
+                  
+                  {isStatusOpen && (
+                    <div className="absolute left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                      <div className="max-h-48 overflow-y-auto no-scrollbar">
+                        {[
+                          { val: 'Pending', color: 'hover:bg-amber-500/10 hover:text-amber-400' },
+                          { val: 'In Progress', color: 'hover:bg-sky-500/10 hover:text-sky-400' },
+                          { val: 'Completed', color: 'hover:bg-emerald-500/10 hover:text-emerald-400' }
+                        ].map(opt => (
                           <button
+                            key={opt.val}
                             type="button"
-                            onClick={() => { setAssignedTo(''); setIsAssignOpen(false); }}
+                            onClick={() => { setStatus(opt.val); setIsStatusOpen(false); }}
                             className={clsx(
-                              "w-full text-left px-4 py-2.5 text-sm font-medium transition-colors border-b border-slate-700/50 last:border-0 hover:bg-sky-600 hover:text-white",
-                              assignedTo === '' ? "bg-slate-700 text-white" : "text-slate-300"
+                              "w-full text-left px-4 py-2.5 text-sm font-medium transition-colors border-b border-slate-700/50 last:border-0",
+                              status === opt.val ? "bg-slate-700 text-white" : "text-slate-300",
+                              opt.color
                             )}
                           >
-                            Unassigned
+                            {opt.val}
                           </button>
-                          {usersList.map(u => (
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Row 2 Col 1: Assign To */}
+                <div className="relative" ref={assignRef}>
+                  <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Assign To</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = !isAssignOpen;
+                      setIsAssignOpen(next);
+                      if (next) fetchUsers();
+                    }}
+                    className="w-full flex items-center justify-between bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-200 outline-none min-h-[80px]"
+                  >
+                    <span className="truncate">{usersList.find(u => u._id === assignedTo)?.name || "Unassigned"}</span>
+                    <User className={clsx("w-4 h-4 transition-transform", isAssignOpen && "scale-110")} />
+                  </button>
+                  
+                  {isAssignOpen && (
+                    <div className="absolute left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                      <div className="max-h-48 overflow-y-auto no-scrollbar">
+                        <button
+                          type="button"
+                          onClick={() => { setAssignedTo(''); setIsAssignOpen(false); }}
+                          className={clsx(
+                            "w-full text-left px-4 py-2.5 text-sm font-medium transition-colors border-b border-slate-700/50 last:border-0 hover:bg-sky-600 hover:text-white",
+                            assignedTo === '' ? "bg-slate-700 text-white" : "text-slate-300"
+                          )}
+                        >
+                          Unassigned
+                        </button>
+                        {usersList.length === 0 ? (
+                          <div className="px-4 py-3 text-xs text-slate-400 italic text-center">
+                            No members available
+                          </div>
+                        ) : (
+                          usersList.map(u => (
                             <button
                               key={u._id}
                               type="button"
@@ -782,43 +802,50 @@ export default function Dashboard() {
                             >
                               {u.name}
                             </button>
-                          ))}
-                        </div>
+                          ))
+                        )}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Row 2 Col 2: Due Date */}
                 <div>
                   <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Due Date</label>
                   <div className="date-input-wrapper">
                     <input
                       type="date"
-                      min={new Date().toISOString().split('T')[0]} // Prevent past dates
+                      min={new Date().toISOString().split('T')[0]}
                       required 
                       value={dueDate}
                       onChange={(e) => setDueDate(e.target.value)}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-200 outline-none transition-colors"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-200 outline-none min-h-[80px] transition-colors"
                     />
                     <Calendar className="custom-calendar-icon w-4 h-4 text-white-500" />
                   </div>
                 </div>
-                
-                <button
-                  type="submit"
-                  disabled={isAddingTask || !title.trim()}
-                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
-                >
-                  {isAddingTask ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add Task"}
-                </button>
-              </form>
-            </div>
+
+                {/* Row 2 Col 3: Add Task Button */}
+                <div>
+                  <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block invisible select-none">Action</label>
+                  <button
+                    type="submit"
+                    disabled={isAddingTask || !title.trim()}
+                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[80px]"
+                  >
+                    {isAddingTask ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add Task"}
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
           )}
 
           {/* Task List Section */}
-          <div className={user?.role?.toLowerCase() === 'admin' ? "lg:col-span-2" : "col-span-1 lg:col-span-3"}>
+          <div className="w-full">
             <div className="bg-slate-900 border border-slate-700/50 rounded-2xl p-6 min-h-[400px]">
               <div className="flex flex-col gap-4 mb-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <h2 className="text-xl font-bold">Your Tasks</h2>
                   <div className="flex flex-wrap gap-2">
                     {['All', 'Pending', 'In Progress', 'Completed', 'Overdue'].map(f => (
@@ -826,7 +853,7 @@ export default function Dashboard() {
                         key={f} 
                         onClick={() => setFilter(f)} 
                         className={clsx(
-                          "px-3 py-1.5 text-sm font-semibold rounded-full border transition flex items-center gap-2", 
+                          "px-3.5 py-1.5 text-sm font-semibold rounded-full border transition flex items-center gap-2", 
                           filter === f 
                             ? clsx(
                                 f === 'All' && "bg-slate-600 text-white border-slate-800",
@@ -864,18 +891,18 @@ export default function Dashboard() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="flex-1 bg-slate-800 border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm font-sans text-slate-200 focus:border-slate-500/50 outline-none transition-colors"
                   />
-                  <div className="relative sm:w-40" ref={sortRef}>
+                  <div className="relative sm:w-44 shrink-0" ref={sortRef}>
                     <button
                       type="button"
                       onClick={() => setIsSortOpen(!isSortOpen)}
-                      className="w-full flex items-center justify-between bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-200 outline-none transition-colors"
+                      className="w-full flex items-center justify-between bg-slate-800 border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-200 outline-none transition-colors"
                     >
                       <span>{sortOrder === 'latest' ? 'Latest First' : 'Oldest First'}</span>
-                      <RefreshCw className={clsx("w-3.5 h-3.5 transition-transform", isSortOpen && "rotate-180")} />
+                      <ChevronDown className={clsx("w-4 h-4 transition-transform text-slate-400", isSortOpen && "rotate-180")} />
                     </button>
                     
                     {isSortOpen && (
-                      <div className="absolute right-0 left-0 sm:left-auto sm:w-40 mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                      <div className="absolute right-0 left-0 sm:left-auto sm:w-44 mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                         {[
                           { val: 'latest', label: 'Latest First' },
                           { val: 'oldest', label: 'Oldest First' }
@@ -1023,10 +1050,16 @@ export default function Dashboard() {
                                   <div className="relative min-w-[140px] flex-1 sm:flex-none" ref={editAssignRef}>
                                     <button
                                       type="button"
-                                      onClick={() => setIsEditAssignOpen(!isEditAssignOpen)}
+                                      onClick={() => {
+                                        const next = !isEditAssignOpen;
+                                        setIsEditAssignOpen(next);
+                                        if (next) fetchUsers();
+                                      }}
                                       className="w-full flex items-center justify-between gap-2 bg-slate-800 border border-slate-500/50 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-200 outline-none"
                                     >
-                                      <span className="truncate">{usersList.find(u => u._id === editAssignedTo)?.name || "Unassigned"}</span>
+                                      <span className="truncate">
+                                        {usersList.find(u => u._id === editAssignedTo)?.name || (task.assignedTo?._id === editAssignedTo ? task.assignedTo.name : "Unassigned")}
+                                      </span>
                                       <User className={clsx("w-3.5 h-3.5 transition-transform shrink-0", isEditAssignOpen && "scale-110")} />
                                     </button>
                                     
@@ -1043,19 +1076,25 @@ export default function Dashboard() {
                                           >
                                             Unassigned
                                           </button>
-                                          {usersList.map(u => (
-                                            <button
-                                              key={u._id}
-                                              type="button"
-                                              onClick={() => { setEditAssignedTo(u._id); setIsEditAssignOpen(false); }}
-                                              className={clsx(
-                                                "w-full text-left px-3 py-2 text-xs font-semibold transition-colors border-b border-slate-800/50 last:border-0 hover:bg-sky-600 hover:text-white",
-                                                editAssignedTo === u._id ? "bg-slate-800 text-white" : "text-slate-400"
-                                              )}
-                                            >
-                                              {u.name}
-                                            </button>
-                                          ))}
+                                          {usersList.length === 0 ? (
+                                            <div className="px-3 py-2 text-xs text-slate-400 italic text-center">
+                                              No members available
+                                            </div>
+                                          ) : (
+                                            usersList.map(u => (
+                                              <button
+                                                key={u._id}
+                                                type="button"
+                                                onClick={() => { setEditAssignedTo(u._id); setIsEditAssignOpen(false); }}
+                                                className={clsx(
+                                                  "w-full text-left px-3 py-2 text-xs font-semibold transition-colors border-b border-slate-800/50 last:border-0 hover:bg-sky-600 hover:text-white",
+                                                  editAssignedTo === u._id ? "bg-slate-800 text-white" : "text-slate-400"
+                                                )}
+                                              >
+                                                {u.name}
+                                              </button>
+                                            ))
+                                          )}
                                         </div>
                                       </div>
                                     )}

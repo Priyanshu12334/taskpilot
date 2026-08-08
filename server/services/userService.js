@@ -20,6 +20,13 @@ const getAllUsers = async () => {
   return await User.find().select('name email role canAccessChat purpose status');
 };
 
+const getAssignableUsers = async () => {
+  return await User.find({
+    role: { $in: ['member', 'Member'] },
+    status: { $ne: 'blocked' }
+  }).select('name email role canAccessChat purpose status');
+};
+
 const updateUserRole = async (userId, role) => {
   const user = await User.findById(userId);
   if (!user) return null;
@@ -39,6 +46,7 @@ module.exports = {
   updateUserProfile,
   updateUserPassword,
   getAllUsers,
+  getAssignableUsers,
   updateUserRole,
   updateUserChatAccess
 };

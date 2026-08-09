@@ -166,12 +166,16 @@ export default function Chat() {
   };
 
   return (
-    <div className="h-screen h-[100dvh] bg-gradient-to-br from-slate-800 to-slate-900 text-white flex flex-col sm:flex-row overflow-hidden relative">
+    <div className="h-screen h-[100dvh] bg-slate-900 text-white flex flex-col sm:flex-row overflow-hidden relative overflow-x-hidden">
       
+      {/* Subtle Green Ambient Glows - Top-Left & Bottom-Right */}
+      <div className="pointer-events-none fixed -top-32 -left-32 w-80 sm:w-[480px] h-80 sm:h-[480px] bg-emerald-500/10 rounded-full blur-3xl z-0" />
+      <div className="pointer-events-none fixed -bottom-32 -right-32 w-80 sm:w-[480px] h-80 sm:h-[480px] bg-emerald-500/10 rounded-full blur-3xl z-0" />
+
       <Sidebar />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col h-full min-h-0 overflow-hidden pt-16 sm:pt-0 p-3 sm:p-10 relative">
+      <main className="flex-1 flex flex-col h-full min-h-0 overflow-hidden pt-16 sm:pt-0 p-3 sm:p-10 relative z-10">
         <header className="p-3 sm:p-2 flex items-center justify-between shrink-0 border-b border-slate-800/50 bg-slate-800/20 backdrop-blur-sm">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold mb-0.5 sm:mb-1 text-white">

@@ -52,6 +52,31 @@
     color-scheme: dark !important;
   }
 
+  .date-input-wrapper input[type="date"]::-webkit-datetime-edit {
+    display: inline-flex;
+    align-items: center;
+    padding: 0;
+    line-height: normal;
+  }
+
+  .date-input-wrapper input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+    display: inline-flex;
+    align-items: center;
+    padding: 0;
+  }
+
+  @media (max-width: 640px) {
+    .date-input-wrapper input[type="date"] {
+      font-size: 13px !important;
+      padding-left: 12px !important;
+      padding-right: 36px !important;
+      min-height: 48px !important;
+      display: flex !important;
+      align-items: center !important;
+      box-sizing: border-box !important;
+    }
+  }
+
   /* Hide the native icon but keep it clickable as a full-width overlay */
   input[type="date"]::-webkit-calendar-picker-indicator {
     position: absolute;

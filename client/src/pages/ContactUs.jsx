@@ -29,9 +29,6 @@ export default function ContactUs() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
 
-  // FAQ Accordion State
-  const [openFaq, setOpenFaq] = useState(null);
-
   // Admin Support Messages Inbox State
   const [adminMessages, setAdminMessages] = useState([]);
   const [loadingAdminMsgs, setLoadingAdminMsgs] = useState(false);
@@ -219,29 +216,6 @@ export default function ContactUs() {
     }
   ];
 
-  const faqs = [
-    {
-      q: 'How do I get access to TaskPilot?',
-      a: 'New users need to be approved by an Admin before receiving Member access.'
-    },
-    {
-      q: 'Can I contact support before my account is approved?',
-      a: 'Yes. Pending/New Users can use the Contact Us page to ask questions or report issues.'
-    },
-    {
-      q: 'How can I report a technical issue?',
-      a: 'Select "Technical Issue" in the contact form and describe the problem clearly.'
-    },
-    {
-      q: 'How can I share feedback?',
-      a: 'Select "Feedback" and tell us what you would like to improve.'
-    },
-    {
-      q: 'Who manages user approval?',
-      a: 'TaskPilot Admins review and approve Pending Users.'
-    }
-  ];
-
   const handleCardClick = (type) => {
     setQueryType(type);
     if (formRef.current) {
@@ -311,10 +285,15 @@ export default function ContactUs() {
   };
 
   return (
-    <div className="min-h-screen sm:h-screen bg-gradient-to-br from-slate-800 to-slate-900 text-white flex flex-col sm:flex-row sm:overflow-hidden relative">
+    <div className="min-h-screen sm:h-screen bg-slate-900 text-white flex flex-col sm:flex-row sm:overflow-hidden relative overflow-x-hidden">
+
+      {/* Subtle Green Ambient Glows - Top-Left & Bottom-Right */}
+      <div className="pointer-events-none fixed -top-32 -left-32 w-80 sm:w-[480px] h-80 sm:h-[480px] bg-emerald-500/10 rounded-full blur-3xl z-0" />
+      <div className="pointer-events-none fixed -bottom-32 -right-32 w-80 sm:w-[480px] h-80 sm:h-[480px] bg-emerald-500/10 rounded-full blur-3xl z-0" />
+
       <Sidebar />
 
-      <main className="flex-1 sm:overflow-y-auto no-scrollbar min-h-screen sm:h-full pt-40 sm:pt-10 p-5 sm:p-14 relative overflow-x-hidden">
+      <main className="flex-1 sm:overflow-y-auto no-scrollbar min-h-screen sm:h-full pt-40 sm:pt-10 p-5 sm:p-14 relative overflow-x-hidden z-10">
         {/* Page Header */}
         <header className="mb-8">
           <h1 className="text-2xl font-bold text-white mb-2">Support & Contact</h1>
@@ -354,10 +333,12 @@ export default function ContactUs() {
                   className="bg-slate-900 border border-slate-700/50 rounded-2xl p-6 hover:border-slate-600 transition-all duration-300 flex flex-col justify-between group shadow-lg"
                 >
                   <div>
-                    <div className={clsx("w-12 h-12 rounded-xl border flex items-center justify-center mb-5 transition-transform group-hover:scale-105 shadow-inner", opt.badgeColor)}>
-                      <IconComp className="w-6 h-6" />
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={clsx("w-10 h-10 rounded-xl border flex items-center justify-center transition-transform group-hover:scale-105 shadow-inner shrink-0", opt.badgeColor)}>
+                        <IconComp className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-base font-bold text-white leading-tight">{opt.title}</h3>
                     </div>
-                    <h3 className="text-lg font-bold text-white mb-2">{opt.title}</h3>
                     <p className="text-slate-400 text-sm font-medium leading-relaxed mb-6">
                       {opt.description}
                     </p>
@@ -762,14 +743,9 @@ export default function ContactUs() {
         <div ref={formRef} className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12 items-stretch">
           {/* Contact Form Column (2 Cols on Desktop) */}
           <div className="lg:col-span-2 bg-slate-900 border border-slate-700/50 rounded-2xl p-6 sm:p-8 shadow-lg flex flex-col justify-between h-full">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                <MessageSquare className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-white">Send Us a Message</h2>
-                <p className="text-xs text-slate-400 font-medium">Fill in the details below and we'll get back to you.</p>
-              </div>
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-white mb-1">Send Us a Message</h2>
+              <p className="text-xs text-slate-400 font-medium">Fill in the details below and we'll get back to you.</p>
             </div>
 
             {submitted ? (
@@ -916,7 +892,7 @@ export default function ContactUs() {
                   href="mailto:suyalpriyanshu2@gmail.com"
                   className="flex items-start gap-3.5 p-3.5 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 transition-all group"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <div className="w-9 h-9 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                     <Mail className="w-4 h-4" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -932,7 +908,7 @@ export default function ContactUs() {
                   href="tel:+918006084643"
                   className="flex items-start gap-3.5 p-3.5 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 transition-all group"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                     <Phone className="w-4 h-4" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -950,7 +926,7 @@ export default function ContactUs() {
                   rel="noopener noreferrer"
                   className="flex items-start gap-3.5 p-3.5 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 transition-all group"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <div className="w-9 h-9 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-200 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                     <Github className="w-4 h-4" />
                   </div>
                   <div className="min-w-0 flex-1 flex items-center justify-between">
@@ -971,7 +947,7 @@ export default function ContactUs() {
                   rel="noopener noreferrer"
                   className="flex items-start gap-3.5 p-3.5 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 transition-all group"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <div className="w-9 h-9 rounded-lg bg-[#0A9FE8]/10 border border-[#0A9FE8]/20 text-[#0A9FE8] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                     <Linkedin className="w-4 h-4" />
                   </div>
                   <div className="min-w-0 flex-1 flex items-center justify-between">
@@ -990,44 +966,6 @@ export default function ContactUs() {
             <div className="mt-8 pt-6 border-t border-slate-800 text-xs text-slate-400 font-medium">
               <p>Typical response time: Within 24 hours</p>
             </div>
-          </div>
-        </div>
-
-        {/* FAQ SECTION */}
-        <div className="mb-12 bg-slate-900 border border-slate-700/50 rounded-2xl p-6 sm:p-8 shadow-lg">
-          <h2 className="text-xl font-bold text-emerald-400 mb-6">
-            Frequently Asked Questions
-          </h2>
-
-          <div className="space-y-3">
-            {faqs.map((faq, idx) => {
-              const isOpen = openFaq === idx;
-              return (
-                <div
-                  key={idx}
-                  className="border border-slate-800 rounded-xl overflow-hidden bg-slate-800/30 transition-colors"
-                >
-                  <button
-                    type="button"
-                    onClick={() => toggleFaq(idx)}
-                    className="w-full p-4 text-left flex items-center justify-between gap-4 font-semibold text-slate-200 hover:text-white text-sm sm:text-base transition-colors"
-                  >
-                    <span>{faq.q}</span>
-                    <ChevronDown
-                      className={clsx(
-                        'w-4 h-4 shrink-0 text-slate-400 transition-transform duration-200',
-                        isOpen && 'rotate-180 text-emerald-400'
-                      )}
-                    />
-                  </button>
-                  {isOpen && (
-                    <div className="px-4 pb-4 text-sm text-slate-400 font-medium leading-relaxed border-t border-slate-800/50 pt-3">
-                      {faq.a}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
           </div>
         </div>
 

@@ -445,11 +445,15 @@ export default function AdminUsers() {
     <>
       <Toast toasts={toasts} removeToast={removeToast} />
 
-      <div className="min-h-screen sm:h-screen bg-gradient-to-br from-slate-800 to-slate-900 text-white flex flex-col sm:flex-row sm:overflow-hidden relative">
+      <div className="min-h-screen sm:h-screen bg-slate-900 text-white flex flex-col sm:flex-row sm:overflow-hidden relative overflow-x-hidden">
+
+        {/* Subtle Green Ambient Glows - Top-Left & Bottom-Right */}
+        <div className="pointer-events-none fixed -top-32 -left-32 w-80 sm:w-[480px] h-80 sm:h-[480px] bg-emerald-500/10 rounded-full blur-3xl z-0" />
+        <div className="pointer-events-none fixed -bottom-32 -right-32 w-80 sm:w-[480px] h-80 sm:h-[480px] bg-emerald-500/10 rounded-full blur-3xl z-0" />
 
         <Sidebar />
 
-        <main className="flex-1 sm:overflow-y-auto no-scrollbar min-h-screen sm:h-full pt-40 sm:pt-0 relative">
+        <main className="flex-1 sm:overflow-y-auto no-scrollbar min-h-screen sm:h-full pt-40 sm:pt-0 relative z-10">
           <div className="p-4 sm:p-12 max-w-7xl mx-auto w-full">
 
             {/* Header Section */}

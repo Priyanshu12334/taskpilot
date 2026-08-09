@@ -453,12 +453,16 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen sm:h-screen bg-gradient-to-br from-slate-800 to-slate-900 text-white flex flex-col sm:flex-row sm:overflow-hidden relative">
+    <div className="min-h-screen sm:h-screen bg-slate-900 text-white flex flex-col sm:flex-row sm:overflow-hidden relative overflow-x-hidden">
+
+      {/* Subtle Green Ambient Glows - Top-Left & Bottom-Right */}
+      <div className="pointer-events-none fixed -top-32 -left-32 w-80 sm:w-[480px] h-80 sm:h-[480px] bg-emerald-500/10 rounded-full blur-3xl z-0" />
+      <div className="pointer-events-none fixed -bottom-32 -right-32 w-80 sm:w-[480px] h-80 sm:h-[480px] bg-emerald-500/10 rounded-full blur-3xl z-0" />
 
       <Sidebar />
 
       {/* Main Content Area */}
-      <main className="flex-1 sm:overflow-y-auto no-scrollbar min-h-screen sm:h-full pt-40 sm:pt-10 p-5 sm:p-14 relative">
+      <main className="flex-1 sm:overflow-y-auto no-scrollbar min-h-screen sm:h-full pt-40 sm:pt-10 p-5 sm:p-14 relative z-10">
         <header className="mb-10 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white mb-2">Hi, <span className="text-emerald-500">{user?.name || 'User'}</span></h1>
@@ -724,7 +728,7 @@ export default function Dashboard() {
                   <button
                     type="button"
                     onClick={() => setIsStatusOpen(!isStatusOpen)}
-                    className="w-full flex items-center justify-between bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-200 outline-none min-h-[80px]"
+                    className="w-full flex items-center justify-between bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-200 outline-none h-11 lg:min-h-[80px] transition-colors"
                   >
                     {status}
                     <Clock className={clsx("w-4 h-4 transition-transform", isStatusOpen && "rotate-180")} />
@@ -766,7 +770,7 @@ export default function Dashboard() {
                       setIsAssignOpen(next);
                       if (next) fetchUsers();
                     }}
-                    className="w-full flex items-center justify-between bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-200 outline-none min-h-[80px]"
+                    className="w-full flex items-center justify-between bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-200 outline-none h-11 lg:min-h-[80px] transition-colors"
                   >
                     <span className="truncate">{usersList.find(u => u._id === assignedTo)?.name || "Unassigned"}</span>
                     <User className={clsx("w-4 h-4 transition-transform", isAssignOpen && "scale-110")} />
@@ -819,7 +823,7 @@ export default function Dashboard() {
                       required 
                       value={dueDate}
                       onChange={(e) => setDueDate(e.target.value)}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-200 outline-none min-h-[80px] transition-colors"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-200 outline-none h-11 lg:min-h-[80px] transition-colors"
                     />
                     <Calendar className="custom-calendar-icon w-4 h-4 text-white-500" />
                   </div>
@@ -827,11 +831,11 @@ export default function Dashboard() {
 
                 {/* Row 2 Col 3: Add Task Button */}
                 <div className="col-span-12 lg:col-span-3">
-                  <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block invisible select-none">Action</label>
+                  <label className="hidden lg:block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1.5 invisible select-none">Action</label>
                   <button
                     type="submit"
                     disabled={isAddingTask || !title.trim()}
-                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[80px]"
+                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed h-11 lg:min-h-[80px]"
                   >
                     {isAddingTask ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add Task"}
                   </button>

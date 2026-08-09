@@ -166,23 +166,23 @@ export default function Chat() {
   };
 
   return (
-    <div className="min-h-screen sm:h-screen bg-gradient-to-br from-slate-800 to-slate-900 text-white flex flex-col sm:flex-row sm:overflow-hidden relative">
+    <div className="h-screen h-[100dvh] bg-gradient-to-br from-slate-800 to-slate-900 text-white flex flex-col sm:flex-row overflow-hidden relative">
       
       <Sidebar />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col sm:overflow-y-auto no-scrollbar min-h-screen sm:h-full pt-40 md:pt-8 p-2 sm:p-10 relative">
-        <header className="p-4 sm:p-2 flex items-center justify-between shrink-0 border-b border-slate-800/50">
+      <main className="flex-1 flex flex-col h-full min-h-0 overflow-hidden pt-16 sm:pt-0 p-3 sm:p-10 relative">
+        <header className="p-3 sm:p-2 flex items-center justify-between shrink-0 border-b border-slate-800/50 bg-slate-800/20 backdrop-blur-sm">
           <div>
-            <h2 className="text-2xl font-bold mb-1">
+            <h2 className="text-xl sm:text-2xl font-bold mb-0.5 sm:mb-1 text-white">
               Team Chat
             </h2>
-             <p className="text-slate-400 text-sm font-medium">Here discuss your problems with the team.</p>
+            <p className="text-slate-400 text-xs sm:text-sm font-medium">Here discuss your problems with the team.</p>
           </div>
         </header>
 
         {/* Chat Area */}
-        <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-4 no-scrollbar">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-4 no-scrollbar min-h-0">
           {loadingMessages ? (
             <div className="space-y-4">
               <ChatMessageSkeleton isSelf={false} />
@@ -206,7 +206,7 @@ export default function Chat() {
                 <div
                   key={idx}
                   className={clsx(
-                    'flex flex-col max-w-[75%] group',
+                    'flex flex-col max-w-[80%] sm:max-w-[75%] group',
                     isSelf ? 'ml-auto items-end' : 'mr-auto items-start'
                   )}
                 >
@@ -260,27 +260,27 @@ export default function Chat() {
 
         {/* Typing Indicator */}
         {typingUser && (
-          <div className="px-6 sm:px-8 py-2 text-xs italic text-slate-400 bg-slate-800 border-t border-slate-800">
+          <div className="px-4 sm:px-8 py-1.5 text-xs italic text-slate-400 bg-slate-800/80 border-t border-slate-800/50 shrink-0">
             {typingUser} is typing...
           </div>
         )}
 
         {/* Message Input Box */}
-        <div >
-          <form onSubmit={handleSendMessage} className="flex items-center gap-3">
+        <div className="p-3 sm:p-0 shrink-0 border-t sm:border-t-0 border-slate-800/50 bg-slate-900/40 sm:bg-transparent backdrop-blur-sm">
+          <form onSubmit={handleSendMessage} className="flex items-center gap-2 sm:gap-3">
             <input
               type="text"
               value={inputMessage}
               onChange={handleInputChange}
               placeholder="Type your message..."
-              className="flex-1 bg-slate-700 border border-slate-800 rounded-3xl px-4 py-3 text-sm font-medium text-slate-200 outline-none transition-all"
+              className="flex-1 bg-slate-700 border border-slate-800 rounded-3xl px-4 py-2.5 sm:py-3 text-sm font-medium text-slate-200 outline-none transition-all"
             />
             <button
               type="submit"
               disabled={!inputMessage.trim()}
-              className="bg-green-700 hover:bg-green-600 text-white p-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg"
+              className="bg-green-700 hover:bg-green-600 text-white p-2.5 sm:p-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg shrink-0"
             >
-              <Send className="w-5 h-4 -ml-1 mt-0.5" />
+              <Send className="w-4 h-4 sm:w-5 sm:h-4" />
             </button>
           </form>
         </div>

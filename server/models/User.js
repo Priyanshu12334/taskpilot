@@ -41,6 +41,9 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  clearedNotifications: [{
+    type: String,
+  }],
 }, { 
   timestamps: true // Automatically create 'createdAt' and 'updatedAt' fields
 });

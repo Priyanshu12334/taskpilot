@@ -7,16 +7,19 @@ const createNotification = async (req, userId, message, type = 'assignment') => 
   try {
     const notification = await Notification.create({
       user: userId,
+      sender: req.user?._id || null,
       message,
       type
     });
     
+    const populated = await Notification.findById(notification._id).populate('sender', 'name role email').lean();
+
     // Emit real-time if io is available
     const io = req.app.get('io');
     if (io) {
-      io.emit(`notification_${userId}`, notification);
+      io.emit(`notification_${userId}`, populated || notification);
     }
-    return notification;
+    return populated || notification;
   } catch (error) {
     console.error('Notification creation error:', error);
   }
@@ -63,7 +66,7 @@ const createTask = async (req, res) => {
       await createNotification(
         req,
         assignedTo,
-        `You have been assigned a new task: "${title}"`
+        `${req.user.name} assigned you a new task: "${title}"`
       );
     }
   } catch (error) {
@@ -238,7 +241,7 @@ const updateTask = async (req, res) => {
           await createNotification(
             req,
             newAssignedTo,
-            `You have been assigned to task: "${task.title}"`
+            `${req.user.name} assigned you to task: "${task.title}"`
           );
         }
       }

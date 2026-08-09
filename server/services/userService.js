@@ -41,6 +41,73 @@ const updateUserChatAccess = async (userId, canAccessChat) => {
   return await user.save();
 };
 
+const createContactMessage = async (senderId, name, email, role, queryType, subject, message) => {
+  const ContactMessage = require('../models/ContactMessage');
+  return await ContactMessage.create({
+    sender: senderId,
+    name,
+    email,
+    role,
+    queryType,
+    subject,
+    message
+  });
+};
+
+const getContactMessages = async (filter = {}, page = 1, limit = 10, search = '') => {
+  const ContactMessage = require('../models/ContactMessage');
+
+  let matchQuery = { ...filter };
+  if (search && search.trim()) {
+    matchQuery.$or = [
+      { name: { $regex: search.trim(), $options: 'i' } },
+      { email: { $regex: search.trim(), $options: 'i' } },
+      { subject: { $regex: search.trim(), $options: 'i' } }
+    ];
+  }
+
+  const skip = (page - 1) * limit;
+  const total = await ContactMessage.countDocuments(matchQuery);
+  const unreadCount = await ContactMessage.countDocuments({ isRead: false });
+
+  const messages = await ContactMessage.find(matchQuery)
+    .populate('sender', 'name email role')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  return {
+    messages,
+    total,
+    page,
+    pages: Math.ceil(total / limit) || 1,
+    unreadCount
+  };
+};
+
+const markContactMessageRead = async (messageId) => {
+  const ContactMessage = require('../models/ContactMessage');
+  return await ContactMessage.findByIdAndUpdate(
+    messageId,
+    { $set: { isRead: true } },
+    { new: true }
+  ).populate('sender', 'name email role');
+};
+
+const markContactMessageResolved = async (messageId, status = 'resolved') => {
+  const ContactMessage = require('../models/ContactMessage');
+  return await ContactMessage.findByIdAndUpdate(
+    messageId,
+    { $set: { status } },
+    { new: true }
+  ).populate('sender', 'name email role');
+};
+
+const deleteContactMessage = async (messageId) => {
+  const ContactMessage = require('../models/ContactMessage');
+  return await ContactMessage.findByIdAndDelete(messageId);
+};
+
 module.exports = {
   findUserById,
   updateUserProfile,
@@ -48,5 +115,10 @@ module.exports = {
   getAllUsers,
   getAssignableUsers,
   updateUserRole,
-  updateUserChatAccess
+  updateUserChatAccess,
+  createContactMessage,
+  getContactMessages,
+  markContactMessageRead,
+  markContactMessageResolved,
+  deleteContactMessage
 };

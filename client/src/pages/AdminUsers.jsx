@@ -8,6 +8,7 @@ import {
 import api from '../services/api';
 import clsx from 'clsx';
 import Sidebar from '../components/Sidebar';
+import { getRoleDetails } from '../utils/roleUtils';
 
 // ─── Toast ───────────────────────────────────────────────
 function Toast({ toasts, removeToast }) {
@@ -57,23 +58,14 @@ function StatusBadge({ status }) {
 
 // ─── Role Badge ──────────────────────────────────────────
 function RoleBadge({ role }) {
-  const r = role?.toLowerCase();
-  const isAdmin    = r === 'admin';
-  const isMember   = r === 'member';
-  const isSimple   = r === 'simpleuser' || r === 'pending';
+  const details = getRoleDetails(role);
 
   return (
     <span className={clsx(
       'inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full border',
-      isAdmin
-        ? 'bg-blue-600/20 text-blue-100 border-blue-500/30'
-        : isMember
-          ? 'bg-emerald-600/20 text-emerald-100 border-emerald-500/30'
-          : isSimple
-            ? 'bg-yellow-500/20 text-yellow-200 border-yellow-500/30'
-            : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+      details.pillClass
     )}>
-      {isAdmin ? <Shield className="w-3 h-3" /> : isSimple ? <Clock className="w-3 h-3" /> : <Users className="w-3 h-3" />}
+      {details.key === 'admin' ? <Shield className="w-3 h-3" /> : details.key === 'pending' ? <Clock className="w-3 h-3" /> : <Users className="w-3 h-3" />}
       {role?.toLowerCase() === 'simpleuser' ? 'pendingUser' : role}
     </span>
   );
@@ -496,8 +488,8 @@ export default function AdminUsers() {
               ) : (
                 [{ label: 'Total Users', val: stats.totalUsers, color: 'slate' },
                   { label: 'Pending User', val: stats.simpleUsers, color: 'yellow' },
-                  { label: 'Team Members', val: stats.members, color: 'emerald' },
-                  { label: 'Admins', val: stats.admins, color: 'blue' },
+                  { label: 'Team Members', val: stats.members, color: 'sky' },
+                  { label: 'Admins', val: stats.admins, color: 'emerald' },
                   { label: 'Blocked', val: stats.blockedUsers, color: 'red' }
                 ].map((stat) => (
                   <div 
@@ -505,10 +497,10 @@ export default function AdminUsers() {
                     className={clsx(
                       "border p-6 rounded-2xl transition-all hover:shadow-xl",
                       stat.color === 'slate'   ? 'bg-slate-500/10 border-slate-700/50 hover:shadow-black/20' :
-                      stat.color === 'yellow'  ? 'bg-yellow-500/10 border-yellow-500/20 hover:shadow-black/20' :
+                      stat.color === 'yellow'  ? 'bg-amber-500/10 border-amber-500/20 hover:shadow-black/20' :
                       stat.color === 'red'     ? 'bg-red-500/10 border-red-500/20 hover:shadow-black/20' :
                       stat.color === 'emerald' ? 'bg-emerald-500/10 border-emerald-500/20 hover:shadow-black/20' :
-                      stat.color === 'blue'    ? 'bg-blue-500/10 border-blue-500/20 hover:shadow-black/20' :
+                      stat.color === 'sky'     ? 'bg-sky-500/10 border-sky-500/20 hover:shadow-black/20' :
                       'bg-slate-900 border-slate-700/50'
                     )}
                   >
@@ -516,10 +508,10 @@ export default function AdminUsers() {
                       <p className={clsx(
                         "text-2xl font-bold",
                         stat.color === 'slate' ? 'text-white' : 
-                        stat.color === 'yellow' ? 'text-yellow-400' :
+                        stat.color === 'yellow' ? 'text-amber-400' :
                         stat.color === 'red' ? 'text-red-400' :
                         stat.color === 'emerald' ? 'text-emerald-400' : 
-                        stat.color === 'blue' ? 'text-blue-400' : 'text-white'
+                        stat.color === 'sky' ? 'text-sky-400' : 'text-white'
                       )}>{stat.val}</p>
                       <p className="text-sm font-medium text-slate-500 uppercase tracking-wide">{stat.label}</p>
                     </div>
@@ -549,9 +541,9 @@ export default function AdminUsers() {
                       'flex-1 md:flex-none px-6 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap border',
                       filterRole === r
                         ? r === 'All' ? 'bg-slate-800 text-white border-slate-700 shadow-lg' :
-                          r === 'simpleUser' ? 'bg-yellow-500/20 text-yellow-200 border-yellow-500/30 shadow-lg shadow-yellow-500/10' :
-                          r === 'member' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 shadow-lg shadow-emerald-500/10' :
-                          r === 'admin' ? 'bg-blue-500/20 text-blue-100 border-blue-500/30 shadow-lg shadow-blue-500/10' :
+                          r === 'simpleUser' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30 shadow-lg shadow-amber-500/10' :
+                          r === 'member' ? 'bg-sky-500/20 text-sky-300 border-sky-500/30 shadow-lg shadow-sky-500/10' :
+                          r === 'admin' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30 shadow-lg shadow-emerald-500/10' :
                           r === 'Blocked' ? 'bg-red-500/20 text-red-400 border-red-500/30 shadow-lg shadow-red-500/10' :
                           'bg-slate-800 text-white'
                         : 'text-slate-500 hover:text-slate-300 border-transparent'
@@ -608,8 +600,7 @@ export default function AdminUsers() {
                               <div className="flex items-center gap-4">
                                 <div className={clsx(
                                   'w-11 h-11 rounded-[14px] flex items-center justify-center font-bold text-base shrink-0 border-2 transition-transform group-hover:scale-105',
-                                  isAdmin ? 'bg-blue-600/10 text-blue-400 border-blue-500/20'
-                                          : 'bg-emerald-600/10 text-emerald-400 border-emerald-500/20'
+                                  getRoleDetails(u.role).avatarClass
                                 )}>
                                   {u.name?.charAt(0).toUpperCase()}
                                 </div>
@@ -683,8 +674,7 @@ export default function AdminUsers() {
                       <div className="flex items-center gap-4">
                         <div className={clsx(
                           'w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg shrink-0 border-2',
-                          isAdmin ? 'bg-blue-600/10 text-blue-400 border-blue-500/20'
-                                  : 'bg-emerald-600/10 text-emerald-400 border-emerald-500/20'
+                          getRoleDetails(u.role).avatarClass
                         )}>
                           {u.name?.charAt(0).toUpperCase()}
                         </div>

@@ -8,6 +8,7 @@ import {
 import api from '../services/api';
 import clsx from 'clsx';
 import NotificationDropdown from './NotificationDropdown';
+import { getRoleDetails } from '../utils/roleUtils';
 
 // ─── Nav config ──────────────────────────────────────────
 const BASE_NAV = [
@@ -28,7 +29,7 @@ function SidebarItem({ path, icon: Icon, label, onClick, disabled, lockedMessage
       )}>
         <Icon className="w-5 h-5 shrink-0" />
       </div>
-      <span className="flex-1 text-sm font-medium tracking-wide text-left">{label}</span>
+      <span className="flex-1 text-[13px] font-medium tracking-wide text-left">{label}</span>
       {disabled && (
         <div className="bg-slate-800/50 p-1.5 rounded-md border border-white/5 ml-auto">
           <Lock className="w-3.5 h-3.5 text-slate-500" />
@@ -134,17 +135,17 @@ const SidebarContent = ({ user, navItems, setOpen, handleLogout, isLoggingOut })
       <div className="flex items-center gap-3 p-2 rounded-2xl bg-slate-800 border-none group hover:bg-white/5 transition-colors duration-200">
         <div className="relative">
           <div className={clsx(
-            'w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border-2 shadow-inner',
-            user?.role?.toLowerCase() === 'admin'
-              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-              : 'bg-slate-500/10 text-slate-300 border-slate-500'
+            'w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shadow-inner',
+            getRoleDetails(user?.role).sidebarAvatarClass
           )}>
             {user?.name?.charAt(0).toUpperCase()}
           </div>
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold truncate text-white tracking-wide">{user?.name}</p>
-          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">{user?.role?.toLowerCase() === 'simpleuser' ? 'PENDING USER' : user?.role}</p>
+          <p className={clsx("text-[10px] font-bold uppercase tracking-wider", getRoleDetails(user?.role).textClass)}>
+            {getRoleDetails(user?.role).displayLabel}
+          </p>
         </div>
       </div>
 

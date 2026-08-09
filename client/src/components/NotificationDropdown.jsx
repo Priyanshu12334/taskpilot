@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Check, Loader2 } from 'lucide-react';
+import { Bell, Check, Loader2, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { socket } from '../socket';
 import api from '../services/api';
@@ -23,7 +23,7 @@ export default function NotificationDropdown() {
 
   const safeNotifications = Array.isArray(notifications) ? notifications : [];
   const unreadCount = safeNotifications.filter(n => {
-    if (n.type === 'registration') {
+    if (n.type === 'registration' || n.type === 'contact') {
       return !n.isRead;
     }
     if (user?.role?.toLowerCase() === 'admin') {
@@ -91,14 +91,14 @@ export default function NotificationDropdown() {
         localStorage.setItem(`lastRead_${user._id}`, now);
         setLastReadTimestamp(now);
 
-        // Auto mark all unread registration notifications as read in DB and state
-        const unreadRegs = safeNotifications.filter(n => n.type === 'registration' && !n.isRead);
-        if (unreadRegs.length > 0) {
+        // Auto mark all unread stored admin notifications (registration/contact) as read in DB and state
+        const unreadStored = safeNotifications.filter(n => (n.type === 'registration' || n.type === 'contact') && !n.isRead);
+        if (unreadStored.length > 0) {
           try {
-            setNotifications(prev => prev.map(n => n.type === 'registration' ? { ...n, isRead: true } : n));
+            setNotifications(prev => prev.map(n => (n.type === 'registration' || n.type === 'contact') ? { ...n, isRead: true } : n));
             await api.patch('/notifications/read-all');
           } catch (err) {
-            console.error('Failed to mark admin registration notifications as read', err);
+            console.error('Failed to mark admin stored notifications as read', err);
           }
         }
       } else {
@@ -125,6 +125,26 @@ export default function NotificationDropdown() {
     }
   };
 
+  const handleClearSingle = async (notifId) => {
+    if (!isAllowed) return;
+    try {
+      await api.delete(`/notifications/${notifId}`);
+      setNotifications(prev => prev.filter(n => n._id !== notifId));
+    } catch (err) {
+      console.error('Failed to clear notification', err);
+    }
+  };
+
+  const handleClearAll = async () => {
+    if (!isAllowed) return;
+    try {
+      await api.delete('/notifications/clear-all');
+      setNotifications([]);
+    } catch (err) {
+      console.error('Failed to clear all notifications', err);
+    }
+  };
+
   const handleNotificationClick = async (notif) => {
     if (notif.type === 'registration') {
       if (!notif.isRead) {
@@ -132,10 +152,14 @@ export default function NotificationDropdown() {
       }
       setIsOpen(false);
       navigate('/admin/users');
+    } else if (notif.type === 'contact') {
+      if (!notif.isRead) {
+        await markAsRead(notif._id);
+      }
+      setIsOpen(false);
+      navigate('/contact', { state: { selectedMsgId: notif.contactMessageId } });
     }
   };
-
-
 
   if (!isAllowed) return null;
 
@@ -157,8 +181,19 @@ export default function NotificationDropdown() {
       {isOpen && (
         <div className="absolute right-0 sm:left-0 sm:right-auto mt-2 w-[calc(90vw-2rem)] sm:w-80 bg-slate-800 border border-slate-700 shadow-2xl rounded-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="p-4 border-b border-slate-700 bg-slate-800/50 flex items-center justify-between">
-            <h3 className="font-bold text-red-600">Notifications</h3>
-            {loading && <Loader2 className="w-3 h-3 animate-spin text-emerald-400" />}
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-[#F5F5F5]">Notifications</h3>
+              {loading && <Loader2 className="w-3 h-3 animate-spin text-emerald-400" />}
+            </div>
+            {notifications.length > 0 && (
+              <button
+                type="button"
+                onClick={handleClearAll}
+                className="text-xs font-semibold text-slate-400 hover:text-red-400 transition-colors"
+              >
+                Clear all
+              </button>
+            )}
           </div>
 
           <div className="max-h-[60vh] sm:max-h-96 overflow-y-auto no-scrollbar">
@@ -168,29 +203,51 @@ export default function NotificationDropdown() {
               </div>
             ) : (
               notifications.map((notif) => {
-                const isUnread = notif.type === 'registration' 
+                const isUnread = (notif.type === 'registration' || notif.type === 'contact')
                   ? !notif.isRead 
                   : (user?.role?.toLowerCase() === 'admin' 
                       ? new Date(notif.createdAt).getTime() > lastReadTimestamp 
                       : !notif.isRead);
 
+                const isClickable = notif.type === 'registration' || notif.type === 'contact';
+
                 return (
                   <div 
                     key={notif._id}
                     className={clsx(
-                      "p-4 border-b border-slate-700 last:border-0 transition-colors",
+                      "p-4 border-b border-slate-700 last:border-0 transition-colors group/item",
                       isUnread ? "bg-emerald-500/5 hover:bg-emerald-500/10" : "hover:bg-slate-700/30"
                     )}
                   >
                     <div className="flex justify-between items-start gap-3">
                       <div 
-                        className={clsx("flex-1 min-w-0", notif.type === 'registration' && "cursor-pointer")}
-                        onClick={() => notif.type === 'registration' && handleNotificationClick(notif)}
+                        className={clsx("flex-1 min-w-0", isClickable && "cursor-pointer")}
+                        onClick={() => isClickable && handleNotificationClick(notif)}
                       >
                         {notif.type === 'registration' && (
                           <div className="flex items-center gap-1.5 mb-1">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">
                               New Pending User
+                            </span>
+                            {isUnread && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                            )}
+                          </div>
+                        )}
+                        {notif.type === 'contact' && (
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-sky-400 bg-sky-500/10 px-1.5 py-0.5 rounded">
+                              Support Message
+                            </span>
+                            {isUnread && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                            )}
+                          </div>
+                        )}
+                        {notif.type !== 'registration' && notif.type !== 'contact' && notif.sender?.role?.toLowerCase() === 'admin' && (
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
+                              ADMIN
                             </span>
                             {isUnread && (
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
@@ -207,18 +264,32 @@ export default function NotificationDropdown() {
                           {dayjs(notif.createdAt).fromNow()}
                         </span>
                       </div>
-                      {notif.type !== 'completion' && isUnread && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        {notif.type !== 'completion' && isUnread && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              markAsRead(notif._id);
+                            }}
+                            className="p-1 text-emerald-400 hover:bg-emerald-500/20 rounded-lg transition-colors"
+                            title="Mark as read"
+                          >
+                            <Check className="w-3 h-3" />
+                          </button>
+                        )}
                         <button
+                          type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            markAsRead(notif._id);
+                            handleClearSingle(notif._id);
                           }}
-                          className="p-1 text-emerald-400 hover:bg-emerald-500/20 rounded-lg transition-colors shrink-0"
-                          title="Mark as read"
+                          className="p-1 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors opacity-70 group-hover/item:opacity-100"
+                          title="Clear notification"
                         >
-                          <Check className="w-3 h-3" />
+                          <Trash2 className="w-3 h-3" />
                         </button>
-                      )}
+                      </div>
                     </div>
                   </div>
                 );

@@ -128,6 +128,154 @@ const updateUserRole = async (req, res) => {
   }
 };
 
+// @desc    Submit a support / contact message
+// @route   POST /api/user/contact
+// @access  Private
+const submitContactMessage = async (req, res) => {
+  try {
+    const { name, email, queryType, subject, message } = req.body;
+
+    if (!name || !email || !subject || !message) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Please fill in all required fields' 
+      });
+    }
+
+    const contactMsg = await userService.createContactMessage(
+      req.user._id,
+      name,
+      email,
+      req.user.role || 'simpleUser',
+      queryType || 'General Query',
+      subject,
+      message
+    );
+
+    // Create notifications for Admins (excluding the sender if they are an admin)
+    const User = require('../models/User');
+    const Notification = require('../models/Notification');
+    const admins = await User.find({ role: { $in: ['admin', 'Admin'] } });
+    const io = req.app.get('io');
+
+    let actionText = 'support message';
+    if (queryType === 'Technical Issue') {
+      actionText = 'technical issue';
+    } else if (queryType === 'Account / Access') {
+      actionText = 'account query';
+    } else if (queryType === 'Feedback') {
+      actionText = 'feedback';
+    }
+    const notifMessage = `New ${actionText} from ${name}`;
+
+    for (const adminUser of admins) {
+      // Do NOT create self-notification if admin is sending the message
+      if (adminUser._id.toString() === req.user._id.toString()) {
+        continue;
+      }
+
+      const notif = await Notification.create({
+        user: adminUser._id,
+        message: notifMessage,
+        type: 'contact',
+        isRead: false,
+        contactMessageId: contactMsg._id
+      });
+
+      if (io) {
+        io.emit(`notification_${adminUser._id}`, notif);
+      }
+    }
+
+    if (io) {
+      io.emit('newContactMessage', contactMsg);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Your message has been submitted successfully.',
+      data: contactMsg
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Unable to submit your message.' 
+    });
+  }
+};
+
+// @desc    Get all support / contact messages (Admin only)
+// @route   GET /api/user/contact
+// @access  Private/Admin
+const getContactMessages = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 5;
+    const search = req.query.search || '';
+    const queryType = req.query.queryType;
+    const statusFilter = req.query.status;
+
+    let filter = {};
+    if (queryType && queryType !== 'All') {
+      filter.queryType = queryType;
+    }
+    if (statusFilter && statusFilter !== 'All') {
+      if (statusFilter === 'Unread') filter.isRead = false;
+      else if (statusFilter === 'Read') filter.isRead = true;
+      else if (statusFilter === 'Resolved') filter.status = 'resolved';
+      else if (statusFilter === 'Pending') filter.status = 'pending';
+    }
+
+    const data = await userService.getContactMessages(filter, page, limit, search);
+    res.status(200).json({
+      success: true,
+      ...data
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Mark support message as read (Admin only)
+// @route   PATCH /api/user/contact/:id/read
+// @access  Private/Admin
+const markContactMessageRead = async (req, res) => {
+  try {
+    const message = await userService.markContactMessageRead(req.params.id);
+    if (!message) return res.status(404).json({ success: false, message: 'Message not found' });
+    res.status(200).json({ success: true, data: message });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Mark support message as resolved (Admin only)
+// @route   PATCH /api/user/contact/:id/resolve
+// @access  Private/Admin
+const markContactMessageResolved = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const message = await userService.markContactMessageResolved(req.params.id, status || 'resolved');
+    if (!message) return res.status(404).json({ success: false, message: 'Message not found' });
+    res.status(200).json({ success: true, data: message });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Delete support message (Admin only)
+// @route   DELETE /api/user/contact/:id
+// @access  Private/Admin
+const deleteContactMessage = async (req, res) => {
+  try {
+    const message = await userService.deleteContactMessage(req.params.id);
+    if (!message) return res.status(404).json({ success: false, message: 'Message not found' });
+    res.status(200).json({ success: true, message: 'Support message deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // @desc    Update user chat access (admin only)
 // @route   PATCH /api/user/:id/chat-access
 // @access  Private/Admin
@@ -147,4 +295,16 @@ const updateUserChatAccess = async (req, res) => {
   }
 };
 
-module.exports = { updateProfile, updatePassword, getAllUsers, getAssignableUsers, updateUserRole, updateUserChatAccess };
+module.exports = { 
+  updateProfile, 
+  updatePassword, 
+  getAllUsers, 
+  getAssignableUsers, 
+  updateUserRole, 
+  updateUserChatAccess,
+  submitContactMessage,
+  getContactMessages,
+  markContactMessageRead,
+  markContactMessageResolved,
+  deleteContactMessage
+};

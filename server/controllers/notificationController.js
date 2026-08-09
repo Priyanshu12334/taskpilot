@@ -32,14 +32,22 @@ const getNotifications = async (req, res) => {
         }
       ]);
       
-      // Fetch stored registration notifications for admin
+      // Fetch stored registration & contact notifications for admin
       const registrationNotifications = await Notification.find({
         user: req.user._id,
-        type: 'registration'
+        type: { $in: ['registration', 'contact'] }
       }).lean();
 
+      // Get cleared notifications list for user
+      const User = require('../models/User');
+      const adminUserDoc = await User.findById(req.user._id).select('clearedNotifications');
+      const clearedSet = new Set((adminUserDoc?.clearedNotifications || []).map(id => id.toString()));
+
+      // Filter out cleared virtual completion notifications
+      const filteredCompletionLogs = completionLogs.filter(log => !clearedSet.has(log._id.toString()));
+
       // Combine and sort by createdAt descending
-      const allNotifications = [...completionLogs, ...registrationNotifications];
+      const allNotifications = [...filteredCompletionLogs, ...registrationNotifications];
       allNotifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
       return res.status(200).json(allNotifications);
@@ -47,6 +55,7 @@ const getNotifications = async (req, res) => {
 
     // Default behavior for Members: Use existing Notification model
     const notifications = await Notification.find({ user: req.user._id })
+      .populate('sender', 'name role email')
       .sort({ createdAt: -1 })
       .limit(50);
     res.status(200).json(notifications);
@@ -97,8 +106,75 @@ const markAllAsRead = async (req, res) => {
   }
 };
 
+// @desc    Delete a single notification
+// @route   DELETE /api/notifications/:id
+// @access  Private
+const deleteNotification = async (req, res) => {
+  try {
+    const role = req.user.role?.toLowerCase();
+    const notifId = req.params.id;
+
+    // Check if it is a stored notification
+    const storedNotif = await Notification.findOne({ _id: notifId, user: req.user._id });
+    if (storedNotif) {
+      await storedNotif.deleteOne();
+      return res.status(200).json({ message: 'Notification cleared' });
+    }
+
+    // For virtual completion activity notifications or admin, save to user.clearedNotifications
+    if (role === 'admin') {
+      const User = require('../models/User');
+      await User.findByIdAndUpdate(req.user._id, {
+        $addToSet: { clearedNotifications: notifId }
+      });
+      return res.status(200).json({ message: 'Notification cleared' });
+    }
+
+    res.status(404).json({ message: 'Notification not found' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Clear all notifications for logged in user
+// @route   DELETE /api/notifications/clear-all
+// @access  Private
+const clearAllNotifications = async (req, res) => {
+  try {
+    const role = req.user.role?.toLowerCase();
+
+    // Delete all stored notifications for this user
+    await Notification.deleteMany({ user: req.user._id });
+
+    if (role === 'admin') {
+      const Task = require('../models/Task');
+      const completionLogs = await Task.aggregate([
+        { $unwind: "$activityLog" },
+        { 
+          $match: { 
+            "activityLog.action": { $regex: /Status changed to Completed|Task completed/i },
+            "activityLog.user": { $ne: req.user.name }
+          } 
+        },
+        { $project: { _id: "$activityLog._id" } }
+      ]);
+      const clearedIds = completionLogs.map(l => l._id.toString());
+      const User = require('../models/User');
+      await User.findByIdAndUpdate(req.user._id, {
+        $addToSet: { clearedNotifications: { $each: clearedIds } }
+      });
+    }
+
+    res.status(200).json({ message: 'All notifications cleared' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getNotifications,
   markAsRead,
   markAllAsRead,
+  deleteNotification,
+  clearAllNotifications
 };

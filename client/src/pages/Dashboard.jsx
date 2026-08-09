@@ -612,16 +612,16 @@ export default function Dashboard() {
             <Calendar className="w-5 h-5 text-emerald-400" /> {chartTitle}
           </h2>
           {loadingWeekly ? (
-            <div className="h-64 flex items-center justify-center bg-transparent rounded-xl border border-slate-800 animate-pulse-subtle shimmer-wrapper">
+            <div className="h-44 sm:h-48 flex items-center justify-center bg-transparent rounded-xl border border-slate-800 animate-pulse-subtle shimmer-wrapper">
               <div className="text-slate-500 text-sm font-medium">Loading activity chart...</div>
             </div>
           ) : chartError ? (
-            <div className="h-64 flex items-center justify-center bg-red-500/5 border border-red-500/20 text-red-400 rounded-xl">
+            <div className="h-44 sm:h-48 flex items-center justify-center bg-red-500/5 border border-red-500/20 text-red-400 rounded-xl">
               <p>{chartError}</p>
             </div>
           ) : weeklyActivity.every(d => d.count === 0) ? (
-            <div className="h-64 flex flex-col items-center justify-center bg-transparent rounded-xl border border-slate-800 text-slate-500 text-center px-4">
-              <Calendar className="w-10 h-10 mb-2 opacity-30" />
+            <div className="h-44 sm:h-48 flex flex-col items-center justify-center bg-transparent rounded-xl border border-slate-800 text-slate-500 text-center px-4">
+              <Calendar className="w-8 h-8 mb-2 opacity-30" />
               {user?.role?.toLowerCase() === 'simpleuser' ? (
                 <>
                   <p className="text-sm font-bold text-slate-300">No task activity yet.</p>
@@ -632,8 +632,8 @@ export default function Dashboard() {
               )}
             </div>
           ) : (
-            <div className="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-44 sm:h-48 w-full min-w-0 relative overflow-hidden">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} debounce={50}>
                 <LineChart data={weeklyActivity} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
                   <XAxis 
@@ -691,9 +691,9 @@ export default function Dashboard() {
             )}
             
             <form onSubmit={handleAddTask} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-[2fr_2fr_1fr] gap-6 items-start">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 {/* Row 1 Col 1: Task Title */}
-                <div>
+                <div className="col-span-12 lg:col-span-4">
                   <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Task Title</label>
                   <textarea
                     required
@@ -707,7 +707,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Row 1 Col 2: Description */}
-                <div>
+                <div className="col-span-12 lg:col-span-5">
                   <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Description</label>
                   <textarea
                     value={description}
@@ -719,7 +719,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Row 1 Col 3: Status */}
-                <div className="relative" ref={statusRef}>
+                <div className="col-span-12 lg:col-span-3 relative" ref={statusRef}>
                   <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Status</label>
                   <button
                     type="button"
@@ -757,7 +757,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Row 2 Col 1: Assign To */}
-                <div className="relative" ref={assignRef}>
+                <div className="col-span-12 lg:col-span-4 relative" ref={assignRef}>
                   <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Assign To</label>
                   <button
                     type="button"
@@ -810,7 +810,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Row 2 Col 2: Due Date */}
-                <div>
+                <div className="col-span-12 lg:col-span-5">
                   <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Due Date</label>
                   <div className="date-input-wrapper">
                     <input
@@ -826,7 +826,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Row 2 Col 3: Add Task Button */}
-                <div>
+                <div className="col-span-12 lg:col-span-3">
                   <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block invisible select-none">Action</label>
                   <button
                     type="submit"

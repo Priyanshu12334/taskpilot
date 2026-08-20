@@ -123,12 +123,6 @@ app.get('/', (req, res) => {
   res.send('Collaboration App API is running...');
 });
 
-// Error Middleware (keep at the end)
-app.use(notFound);
-app.use(errorHandler);
-
-// Set port from environment variable or default to 5000
-const PORT = process.env.PORT || 5000;
 
 
 app.get("/api/health", (req, res) => {
@@ -137,6 +131,15 @@ app.get("/api/health", (req, res) => {
     message: "TaskPilot backend is running",
   });
 });
+
+
+
+// Error Middleware 
+app.use(notFound);
+app.use(errorHandler);
+
+// Set port from environment variable or default to 5000
+const PORT = process.env.PORT || 5000;
 
 
 server.listen(PORT, () => {

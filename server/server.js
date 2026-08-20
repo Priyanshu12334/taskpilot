@@ -124,14 +124,13 @@ app.get('/', (req, res) => {
 });
 
 
-
-app.get("/api/health", (req, res) => {
+// Health check endpoint for UptimeRobot service
+app.all("/api/health", (req, res) => {
   res.status(200).json({
     status: "online",
     message: "TaskPilot backend is running",
   });
 });
-
 
 
 // Error Middleware 

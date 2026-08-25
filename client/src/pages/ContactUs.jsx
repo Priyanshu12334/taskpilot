@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../context/AuthContext';
 import { 
-  HelpCircle, Wrench, Lightbulb, UserCheck, Mail, Phone, 
+  HelpCircle, Wrench, Lightbulb, UserCheck, Mail, Globe, 
   Github, Linkedin, ChevronDown, Send, CheckCircle2, 
   Loader2, ArrowUpRight, MessageSquare, Inbox, Search,
   X, Check, Clock, Eye, Filter, ChevronLeft, ChevronRight, CheckSquare, Trash2
@@ -903,19 +903,24 @@ export default function ContactUs() {
                   </div>
                 </a>
 
-                {/* Phone */}
+                {/* Portfolio */}
                 <a
-                  href="tel:+918006084643"
+                  href="https://portfolio-ten-blond-87.vercel.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex items-start gap-3.5 p-3.5 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 transition-all group"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                    <Phone className="w-4 h-4" />
+                  <div className="w-9 h-9 rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <Globe className="w-4 h-4" />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Phone</p>
-                    <p className="text-sm font-medium text-slate-200 transition-colors">
-                      +91 8006084643
-                    </p>
+                  <div className="min-w-0 flex-1 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Portfolio</p>
+                      <p className="text-sm font-medium text-slate-200 transition-colors">
+                        Priyanshu Suyal
+                      </p>
+                    </div>
+                    <ArrowUpRight className="w-4 h-4 text-slate-500 transition-colors" />
                   </div>
                 </a>
 

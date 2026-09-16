@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Plus, Edit2, Trash2, Check, User, AlertTriangle, X, History, Clock, RefreshCw, ChevronDown, CheckCircle2, UserPlus, MessageSquare, Send, Lock, LayoutGrid, Calendar } from 'lucide-react';
+import { Loader2, Plus, Edit2, Trash2, Check, User, AlertTriangle, X, History, Clock, RefreshCw, ChevronDown, CheckCircle2, UserPlus, MessageSquare, Send, Lock, LayoutGrid, Calendar, Sparkles } from 'lucide-react';
 import api from '../services/api';
 import { socket } from '../socket';
 import clsx from 'clsx';
@@ -107,6 +107,35 @@ export default function Dashboard() {
   const [assignedTo, setAssignedTo] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [isAddingTask, setIsAddingTask] = useState(false);
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+
+  // AI Task Description Generator Handler
+  const handleGenerateAiDescription = async () => {
+    if (!title || !title.trim()) {
+      setTaskError('Please enter a task title first before generating AI description.');
+      return;
+    }
+
+    setIsGeneratingAi(true);
+    setTaskError('');
+
+    try {
+      const res = await api.post('/tasks/generate-description', {
+        title: title.trim(),
+        description: description ? description.trim() : ''
+      });
+
+      if (res.data && res.data.description) {
+        setDescription(res.data.description);
+      }
+    } catch (err) {
+      console.error('[AI Description Generator Error]:', err);
+      const errMsg = err.response?.data?.message || 'Failed to generate description with AI. Please try again.';
+      setTaskError(errMsg);
+    } finally {
+      setIsGeneratingAi(false);
+    }
+  };
 
   // States for inline editing
   const [editingTask, setEditingTask] = useState(null); 
@@ -712,7 +741,28 @@ export default function Dashboard() {
 
                 {/* Row 1 Col 2: Description */}
                 <div className="col-span-12 lg:col-span-5">
-                  <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Description</label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-sm font-semibold text-slate-400 uppercase tracking-wider block">Description</label>
+                    <button
+                      type="button"
+                      onClick={handleGenerateAiDescription}
+                      disabled={isGeneratingAi}
+                      className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Generate description using AI based on Task Title"
+                    >
+                      {isGeneratingAi ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
+                          <span>Generating...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Generate with AI</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}

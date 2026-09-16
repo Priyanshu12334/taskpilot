@@ -344,4 +344,84 @@ const getWeeklyActivity = async (req, res) => {
   }
 };
 
-module.exports = { createTask, getTasks, updateTask, deleteTask, getWeeklyActivity };
+// @desc    Generate AI task description using Gemini API
+// @route   POST /api/tasks/generate-description
+// @access  Private/Admin
+const generateTaskDescription = async (req, res) => {
+  try {
+    const { title, description } = req.body;
+
+    if (!title || typeof title !== 'string' || !title.trim()) {
+      return res.status(400).json({ message: 'Task title is required to generate AI description' });
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.error('[generateTaskDescription] ❌ GEMINI_API_KEY environment variable is missing.');
+      return res.status(500).json({ 
+        message: 'GEMINI_API_KEY is not configured in backend environment variables.' 
+      });
+    }
+
+    const { GoogleGenerativeAI } = require('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(apiKey);
+    
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
+
+    const prompt = `Task Title: "${title.trim()}"
+${description && description.trim() ? `Existing Description / Notes: "${description.trim()}"` : ''}
+
+Instructions:
+Generate a SHORT and directly relevant task description based on the task title and existing notes.
+
+Strict Requirements:
+- Maximum 40 words.
+- 1 to 2 short sentences.
+- Do NOT generate Acceptance Criteria.
+- Do NOT use bullet points or lists.
+- Do NOT add unnecessary details, assumptions, technologies, or extra requirements.
+- Do NOT repeat the task title unnecessarily.
+- Focus strictly on what needs to be done.
+- Keep the description very simple if the title is already clear.
+- Never invent requirements that are not implied by the title or existing description.
+- Return ONLY plain text description without headings, markdown formatting, or bullet points.
+
+Examples:
+Title: "Check and fix bugs of JavaScript file"
+Description: "Review the JavaScript file, identify existing bugs, and fix the issues affecting the application."
+
+Title: "Add login API"
+Description: "Implement the login API with proper validation and authentication."
+
+Title: "Fix navbar on mobile"
+Description: "Fix the mobile navbar layout and ensure navigation works correctly on smaller screens."
+
+Title: "Add dark mode"
+Description: "Implement dark mode and apply the theme consistently across the application."`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let generatedText = response.text();
+
+    if (!generatedText || !generatedText.trim()) {
+      return res.status(500).json({ message: 'Empty response returned from Gemini AI' });
+    }
+
+    generatedText = generatedText.trim().replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/i, '').trim();
+
+    return res.status(200).json({ description: generatedText });
+  } catch (error) {
+    console.error('[generateTaskDescription] ❌ Gemini API Error:', error);
+    
+    let userMessage = 'Failed to generate AI description. Please try again.';
+    if (error.message?.includes('API_KEY_INVALID') || error.status === 400) {
+      userMessage = 'Invalid Gemini API key. Please check GEMINI_API_KEY in server/.env file.';
+    } else if (error.message?.includes('RESOURCE_EXHAUSTED') || error.status === 429) {
+      userMessage = 'Gemini API rate limit exceeded. Please wait a moment and try again.';
+    }
+
+    return res.status(500).json({ message: userMessage, error: error.message });
+  }
+};
+
+module.exports = { createTask, getTasks, updateTask, deleteTask, getWeeklyActivity, generateTaskDescription };

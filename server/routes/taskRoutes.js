@@ -1,11 +1,14 @@
 const express = require('express');
-const { createTask, getTasks, updateTask, deleteTask, getWeeklyActivity } = require('../controllers/taskController');
+const { createTask, getTasks, updateTask, deleteTask, getWeeklyActivity, generateTaskDescription } = require('../controllers/taskController');
 const { protect, admin, approved } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
 // The "protect" and "approved" middleware ensures no one can post or get tasks without permissions.
 router.route('/').post(protect, admin, createTask).get(protect, approved, getTasks);
+
+// Route to generate AI task description for Admin
+router.route('/generate-description').post(protect, admin, generateTaskDescription);
 
 // Route to fetch task activity count for the last 7 days
 router.route('/weekly-activity').get(protect, approved, getWeeklyActivity);

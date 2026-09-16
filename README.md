@@ -9,6 +9,7 @@ TaskPilot is a full-stack MERN application for team collaboration and task manag
 * ✅ Admin Approval Workflow for New User Registration (Pending User → Member)
 * 📋 Task Creation, Assignment & Management (Admin Only)
 * 👨‍💻 Team Members can View, Update and Complete Assigned Tasks
+* 🤖 AI-Powered Task Description Generation using Gemini
 * 💬 Realtime Team Chat powered by Socket.IO
 * 🔔 Realtime Notifications for Task Assignments and Updates
 * 📊 Dashboard with Task Statistics & Weekly Task Activity Analytics

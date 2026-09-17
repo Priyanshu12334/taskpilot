@@ -42,16 +42,21 @@ function Toast({ toasts, removeToast }) {
 
 
 // ─── Status Badge ────────────────────────────────────────
-function StatusBadge({ status }) {
+function StatusBadge({ status, role }) {
   const isBlocked = status === 'blocked';
+  const r = (role || '').toLowerCase();
+  const isPending = !isBlocked && (status === 'pending' || r === 'simpleuser' || r === 'pending' || r === 'pendinguser');
+
   return (
     <span className={clsx(
       'inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-md border uppercase tracking-tighter',
       isBlocked
         ? 'bg-red-500/10 text-red-400 border-red-500/20'
+        : isPending
+        ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
         : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
     )}>
-      {status || 'active'}
+      {isBlocked ? (status || 'blocked') : isPending ? 'PENDING' : (status || 'active')}
     </span>
   );
 }
@@ -667,7 +672,7 @@ export default function AdminUsers() {
                             <td className="px-6 py-5">
                               <div className="flex flex-col gap-1 items-start">
                                 <RoleBadge role={u.role} />
-                                <StatusBadge status={u.status} />
+                                <StatusBadge status={u.status} role={u.role} />
                               </div>
                             </td>
                             <td className="px-6 py-5">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Plus, Edit2, Trash2, Check, User, AlertTriangle, X, History, Clock, RefreshCw, ChevronDown, CheckCircle2, UserPlus, MessageSquare, Send, Lock, LayoutGrid, Calendar, Sparkles } from 'lucide-react';
+import { Loader2, Plus, Edit2, Trash2, Check, User, AlertTriangle, X, History, Clock, RefreshCw, ChevronDown, CheckCircle2, UserPlus, MessageSquare, Send, Lock, LayoutGrid, Calendar, Sparkles, ChevronLeft, ChevronRight, CheckSquare } from 'lucide-react';
 import api from '../services/api';
 import { socket } from '../socket';
 import clsx from 'clsx';
@@ -12,6 +12,209 @@ import Loader from '../components/Loader';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
 dayjs.extend(relativeTime);
+
+// ─── Pending User Onboarding Tutorial Component ──────────
+const tutorialSteps = [
+  {
+    step: 1,
+    title: 'Register',
+    subtitle: 'Account Creation',
+    description: 'Your account starts with Pending User access.',
+    icon: UserPlus,
+    badgeColor: 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400',
+    iconColor: 'text-cyan-400',
+    iconBg: 'bg-cyan-500/10 border-cyan-500/20',
+  },
+  {
+    step: 2,
+    title: 'Admin Review',
+    subtitle: 'Account Verification',
+    description: 'Your account is awaiting administrator review. For faster access, contact the admin through Contact Us.',
+    icon: Clock,
+    badgeColor: 'bg-amber-500/10 border-amber-500/20 text-amber-400',
+    iconColor: 'text-amber-400',
+    iconBg: 'bg-amber-500/10 border-amber-500/20',
+  },
+  {
+    step: 3,
+    title: 'Access Granted',
+    subtitle: 'Role Assignment',
+    description: "You may be approved as a Member or Admin, depending on the administrator's decision.",
+    icon: CheckCircle2,
+    badgeColor: 'bg-purple-500/10 border-purple-500/20 text-purple-400',
+    iconColor: 'text-purple-400',
+    iconBg: 'bg-purple-500/10 border-purple-500/20',
+  },
+  {
+    step: 4,
+    title: 'Start Working',
+    subtitle: 'Full Authorization',
+    description: 'Once approved, the admin can assign Member or Admin access, unlocking the features and permissions for your role. Team chat will also become available.',
+    icon: CheckSquare,
+    badgeColor: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
+    iconColor: 'text-emerald-400',
+    iconBg: 'bg-emerald-500/10 border-emerald-500/20',
+  },
+];
+
+function PendingUserTutorial() {
+  const [currentStep, setCurrentStep] = useState(0);
+
+  const step = tutorialSteps[currentStep];
+  const StepIcon = step.icon;
+
+  const handleNext = () => {
+    if (currentStep < tutorialSteps.length - 1) {
+      setCurrentStep(prev => prev + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1);
+    }
+  };
+
+  return (
+    <div className="bg-slate-900 border border-slate-700/50 rounded-2xl p-5 sm:p-8 mb-12 shadow-xl relative overflow-hidden">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 pb-6 border-b border-slate-800 gap-4">
+        <div>
+          <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight mb-1">How TaskPilot Works</h2>
+          <p className="text-xs sm:text-sm text-slate-400 font-medium">
+            Follow these 4 simple steps to understand how TaskPilot access works.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 self-start sm:self-auto bg-slate-800/80 border border-slate-700/60 px-3 py-1.5 rounded-xl">
+          <span className="text-xs font-bold text-slate-200">Step {currentStep + 1}</span>
+          <span className="text-xs font-semibold text-slate-500">/</span>
+          <span className="text-xs font-bold text-slate-400">4</span>
+        </div>
+      </div>
+
+      {/* Step Tracker Pills Bar */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-8 relative">
+        {tutorialSteps.map((s, idx) => {
+          const isActive = idx === currentStep;
+          const isCompleted = idx < currentStep;
+
+          return (
+            <button
+              key={s.step}
+              type="button"
+              onClick={() => setCurrentStep(idx)}
+              className={clsx(
+                "flex flex-row items-center justify-start sm:justify-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-3 sm:py-2.5 rounded-xl border text-[11px] sm:text-xs font-bold transition-all duration-300 w-full min-w-0",
+                isActive
+                  ? "bg-slate-800 border-slate-600 text-white shadow-md shadow-black/20 scale-[1.01]"
+                  : isCompleted
+                  ? "bg-slate-800/60 border-slate-700/60 text-slate-300 hover:bg-slate-800 hover:text-white"
+                  : "bg-slate-800/30 border-slate-800 text-slate-500 hover:text-slate-400 hover:bg-slate-800/50"
+              )}
+            >
+              <div
+                className={clsx(
+                  "w-5 h-5 sm:w-[18px] sm:h-[18px] rounded-full flex items-center justify-center text-[10px] sm:text-[9.5px] font-extrabold shrink-0 transition-all",
+                  isActive
+                    ? "bg-white text-slate-950 font-black"
+                    : isCompleted
+                    ? "bg-slate-700 text-slate-300"
+                    : "bg-slate-800 text-slate-500"
+                )}
+              >
+                {isCompleted ? <Check className="w-3 h-3 sm:w-2.5 sm:h-2.5 text-slate-300" /> : s.step}
+              </div>
+              <span className="truncate text-[11px] sm:text-xs leading-none">{s.title}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Main Step Display Card with Animation */}
+      <div
+        key={currentStep}
+        className="bg-slate-800/40 border border-slate-700/40 rounded-2xl p-6 sm:p-8 mb-8 animate-in fade-in slide-in-from-right-4 duration-300"
+      >
+        <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
+          {/* Desktop Icon Box */}
+          <div className={clsx(
+            "hidden sm:flex w-12 h-12 border rounded-xl items-center justify-center shrink-0 shadow-lg shadow-black/20",
+            step.iconBg
+          )}>
+            <StepIcon className={clsx("w-6 h-6", step.iconColor)} />
+          </div>
+
+          <div className="flex-1 w-full">
+            {/* Mobile Icon + Subtitle Badge Row */}
+            <div className="flex sm:hidden items-center gap-2.5 mb-3">
+              <div className={clsx("w-8 h-8 border rounded-lg flex items-center justify-center shrink-0", step.iconBg)}>
+                <StepIcon className={clsx("w-4 h-4", step.iconColor)} />
+              </div>
+              <span className={clsx("text-[11px] font-bold uppercase tracking-wider border px-2.5 py-0.5 rounded-md", step.badgeColor)}>
+                {step.subtitle}
+              </span>
+            </div>
+
+            {/* Desktop Subtitle Badge */}
+            <div className="hidden sm:flex items-center gap-2 mb-1">
+              <span className={clsx("text-[11px] font-bold uppercase tracking-wider border px-2.5 py-0.5 rounded-md", step.badgeColor)}>
+                {step.subtitle}
+              </span>
+            </div>
+
+            <h3 className="text-xl sm:text-xl font-extrabold text-white mb-2">
+              Step {step.step} — {step.title}
+            </h3>
+            <p className="text-slate-300 text-xs sm:text-sm leading-relaxed max-w-2xl font-medium">
+              "{step.description}"
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Controls Footer */}
+      <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+        <button
+          type="button"
+          onClick={handlePrev}
+          disabled={currentStep === 0}
+          className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-bold rounded-xl flex items-center gap-1.5 transition active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100 border border-slate-700/50"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          Previous
+        </button>
+
+        <div className="text-xs font-bold text-slate-400 tracking-widest">
+          {currentStep + 1} / {tutorialSteps.length}
+        </div>
+
+        <button
+          type="button"
+          onClick={handleNext}
+          disabled={currentStep === tutorialSteps.length - 1}
+          className={clsx(
+            "px-5 py-2.5 text-xs sm:text-sm font-bold rounded-xl flex items-center gap-1.5 transition active:scale-95 shadow-lg",
+            currentStep === tutorialSteps.length - 1
+              ? "bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/20"
+              : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20"
+          )}
+        >
+          {currentStep === tutorialSteps.length - 1 ? (
+            <>
+              <Check className="w-4 h-4" />
+              Done
+            </>
+          ) : (
+            <>
+              Next
+              <ChevronRight className="w-4 h-4" />
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 // ─── Helper Functions ────────────────────────────────────
 const isDueTomorrow = (date) => {
@@ -594,8 +797,13 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Stats Cards Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-6 mb-12">
+        {/* Pending User Onboarding Tutorial OR Normal Dashboard Content */}
+        {['simpleuser', 'pending'].includes(user?.role?.toLowerCase()) ? (
+          <PendingUserTutorial />
+        ) : (
+          <>
+            {/* Stats Cards Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-6 mb-12">
           {loadingTasks ? (
             <>
               <StatsSkeletonCard />
@@ -1317,6 +1525,8 @@ export default function Dashboard() {
           </div>
           
         </div>
+        </>
+        )}
       </main>
 
       {/* Activity History Modal */}

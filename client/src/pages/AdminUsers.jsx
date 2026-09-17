@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   Loader2, Shield, ShieldOff, Users, CheckCircle2,
   AlertCircle, Search, X, MessageSquare, ToggleLeft, ToggleRight,
-  Clock, Trash2, Check, XCircle
+  Clock, Trash2, Check, XCircle, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import api from '../services/api';
 import clsx from 'clsx';
@@ -334,6 +334,38 @@ export default function AdminUsers() {
     return u.role?.toLowerCase() === filterRole?.toLowerCase() && u.status !== 'blocked';
   });
 
+  // ── Pagination (Max 5 users per page) ──
+  const USERS_PER_PAGE = 5;
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, filterRole]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / USERS_PER_PAGE));
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const startIndex = (currentPage - 1) * USERS_PER_PAGE;
+  const paginatedUsers = filtered.slice(startIndex, startIndex + USERS_PER_PAGE);
+
+  const getPageNumbers = () => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    if (currentPage <= 4) {
+      return [1, 2, 3, 4, 5, '...', totalPages];
+    }
+    if (currentPage >= totalPages - 3) {
+      return [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    }
+    return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+  };
+
   // ── Action Buttons ──
   const ActionButton = ({ u }) => {
     const isSelf     = u._id === user?._id;
@@ -402,7 +434,7 @@ export default function AdminUsers() {
         </button>
         <button
           onClick={() => handleBlock(u)}
-          className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all"
+          className="p-2 text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 hover:text-red-300 rounded-xl transition-all active:scale-95"
           title="Block User"
         >
           <XCircle className="w-4 h-4" />
@@ -591,13 +623,13 @@ export default function AdminUsers() {
                         </td>
                       </tr>
                     ) : (
-                      filtered.map((u, idx) => {
+                      paginatedUsers.map((u, idx) => {
                         const isAdmin = u.role === 'Admin';
                         return (
                           <tr key={u._id} className="hover:bg-slate-700/20 transition-colors group">
                             <td className="px-6 py-5">
                               <span className="text-xs font-medium text-slate-600 group-hover:text-slate-400 transition-colors">
-                                {String(idx + 1).padStart(2, '0')}
+                                {String(startIndex + idx + 1).padStart(2, '0')}
                               </span>
                             </td>
                             <td className="px-6 py-5">
@@ -667,7 +699,7 @@ export default function AdminUsers() {
                   {search || filterRole !== 'All' ? 'No users match your filter.' : 'No users found.'}
                 </div>
               ) : (
-                filtered.map((u) => {
+                paginatedUsers.map((u) => {
                   const isAdmin = u.role === 'Admin';
                   const isSelf  = u._id === user?._id;
                   return (
@@ -708,6 +740,55 @@ export default function AdminUsers() {
                 })
               )}
             </div>
+
+            {/* ── Pagination Controls (Max 5 Users Per Page) ── */}
+            {!loading && totalPages > 1 && (
+              <div className="flex items-center justify-center mt-6 pt-5 border-t border-slate-800">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    className="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1 active:scale-95 disabled:active:scale-100"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Previous</span>
+                  </button>
+
+                  {getPageNumbers().map((p, idx) =>
+                    p === '...' ? (
+                      <span key={`dots-${idx}`} className="px-2 text-xs text-slate-500 font-bold select-none">
+                        ...
+                      </span>
+                    ) : (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setCurrentPage(p)}
+                        className={clsx(
+                          "w-8 h-8 rounded-lg text-xs font-bold transition-all border active:scale-95",
+                          currentPage === p
+                            ? "bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-600/20"
+                            : "bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700 hover:text-white"
+                        )}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )}
+
+                  <button
+                    type="button"
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    className="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1 active:scale-95 disabled:active:scale-100"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
 
             {users.length > 0 && !loading && (
               <p className="mt-8 text-center text-xs font-semibold text-slate-600 uppercase tracking-widest opacity-60">

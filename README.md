@@ -13,6 +13,7 @@ TaskPilot is a full-stack MERN application for team collaboration and task manag
 * 💬 Realtime Team Chat powered by Socket.IO
 * 🔔 Realtime Notifications for Task Assignments and Updates
 * 📊 Dashboard with Task Statistics & Weekly Task Activity Analytics
+* ⚡ Redis Caching for Faster Task Retrieval
 * 👤 User Profile Management
 * 📱 Fully Responsive Design for Desktop, Tablet & Mobile
 * ⚡ Fast and Modern User Experience
@@ -34,12 +35,15 @@ TaskPilot is a full-stack MERN application for team collaboration and task manag
 * Express.js
 * MongoDB
 * Mongoose
+* Redis
 * JWT Authentication
 * Socket.IO
+* Gemini API
 
 ### DevOps & Deployment
 * Docker
 * Docker Compose
+* Redis Cloud
 * Vercel
 * Render
 

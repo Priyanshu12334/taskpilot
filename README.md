@@ -50,7 +50,7 @@ TaskPilot is a full-stack MERN application for team collaboration and task manag
 ## Project Structure
 
 ```text
-TEAM/
+TaskPilot/
 ├── client/
 ├── server/
 ├── docker-compose.yml
@@ -62,8 +62,8 @@ TEAM/
 ### Clone Repository
 
 ```bash
-git clone <repository-url>
-cd TEAM
+git clone <https://github.com/Priyanshu12334/taskpilot>
+cd taskpilot
 ```
 
 ### Install Dependencies
@@ -92,6 +92,8 @@ Example:
 PORT=5000
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_secret_key
+REDIS_URL=your_redis_connection_string
+GEMINI_API_KEY=your_gemini_api_key
 ```
 
 ## Run Locally

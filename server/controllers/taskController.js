@@ -1,6 +1,7 @@
 const taskService = require('../services/taskService');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
+const { getTaskCacheKey, getCache, setCache, clearUserTaskCache } = require('../config/redis');
 
 // Helper to create and emit notification
 const createNotification = async (req, userId, message, type = 'assignment') => {
@@ -58,6 +59,13 @@ const createTask = async (req, res) => {
         timestamp: new Date() 
       }]
     });
+
+    await clearUserTaskCache(req.user._id);
+    console.log(`CACHE INVALIDATED: ${req.user._id}`);
+    if (assignedTo && assignedTo.toString() !== req.user._id.toString()) {
+      await clearUserTaskCache(assignedTo);
+      console.log(`CACHE INVALIDATED: ${assignedTo}`);
+    }
 
     res.status(201).json(task);
 
@@ -118,6 +126,18 @@ const getTasks = async (req, res) => {
     const sortOption = sort === 'latest' ? { createdAt: -1 } : { createdAt: 1 };
     const skip = (page - 1) * limit;
 
+    const cacheKey = getTaskCacheKey(req.user._id, req.query);
+    if (cacheKey) {
+      const cachedData = await getCache(cacheKey);
+      if (cachedData) {
+        console.log('CACHE HIT');
+        return res.status(200).json(cachedData);
+      } else {
+        console.log('CACHE MISS');
+      }
+    }
+
+    console.log('MONGODB FETCH');
     // Use service layer for DB operations
     const totalMatchingTasks = await taskService.countTasks(query);
     const tasks = await taskService.getTasks(query, sortOption, skip, parseInt(limit));
@@ -145,12 +165,19 @@ const getTasks = async (req, res) => {
       if (status === 'in progress') inProgress = s.count;
     });
 
-    res.status(200).json({
+    const responseData = {
       tasks,
       totalPages: Math.ceil(totalMatchingTasks / limit) || 1,
       currentPage: parseInt(page),
       stats: { total, pending, completed, inProgress, overdue }
-    });
+    };
+
+    if (cacheKey) {
+      await setCache(cacheKey, responseData);
+      console.log('CACHE SET');
+    }
+
+    res.status(200).json(responseData);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -263,6 +290,23 @@ const updateTask = async (req, res) => {
     await task.save();
     const updatedTask = await taskService.findTaskById(task._id);
 
+    await clearUserTaskCache(req.user._id);
+    console.log(`CACHE INVALIDATED: ${req.user._id}`);
+    
+    const newAssignedId = updatedTask.assignedTo 
+      ? (updatedTask.assignedTo._id ? updatedTask.assignedTo._id.toString() : updatedTask.assignedTo.toString())
+      : null;
+
+    if (newAssignedId && newAssignedId !== req.user._id.toString()) {
+      await clearUserTaskCache(newAssignedId);
+      console.log(`CACHE INVALIDATED: ${newAssignedId}`);
+    }
+
+    if (assignedToId && assignedToId !== newAssignedId && assignedToId !== req.user._id.toString()) {
+      await clearUserTaskCache(assignedToId);
+      console.log(`CACHE INVALIDATED: ${assignedToId}`);
+    }
+
     res.status(200).json(updatedTask);
   } catch (error) {
     console.error('[updateTask] Error:', error.message);
@@ -288,6 +332,13 @@ const deleteTask = async (req, res) => {
     // Delete using service
     await taskService.deleteTask(task);
     
+    await clearUserTaskCache(req.user._id);
+    console.log(`CACHE INVALIDATED: ${req.user._id}`);
+    if (task.assignedTo && task.assignedTo.toString() !== req.user._id.toString()) {
+      await clearUserTaskCache(task.assignedTo);
+      console.log(`CACHE INVALIDATED: ${task.assignedTo}`);
+    }
+
     res.status(200).json({ id: req.params.id, message: 'Task removed' });
   } catch (error) {
     res.status(500).json({ message: error.message });

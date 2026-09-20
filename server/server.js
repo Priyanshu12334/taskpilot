@@ -5,6 +5,7 @@ const cors = require('cors');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
+const { connectRedis } = require('./config/redis');
 const authRoutes = require('./routes/authRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -15,6 +16,7 @@ dotenv.config();
 
 // Connect to the database
 connectDB();
+connectRedis();
 
 // Initialize the Express application
 const allowedOrigins = [

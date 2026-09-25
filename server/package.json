@@ -16,6 +16,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "framer-motion": "^13.4.3",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.4.1",
     "redis": "^6.2.1",

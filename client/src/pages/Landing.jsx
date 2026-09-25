@@ -12,9 +12,34 @@ export default function Landing() {
   useEffect(() => {
     document.documentElement.classList.add('no-scrollbar');
     document.body.classList.add('no-scrollbar');
+
+    const revealItems = document.querySelectorAll('[data-reveal]');
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      {
+        threshold: 0.12,
+        rootMargin: '0px 0px -40px 0px',
+      }
+    );
+
+    revealItems.forEach((item) => {
+      const delay = Number(item.dataset.delay || 0);
+      item.style.transitionDelay = `${delay}ms`;
+      observer.observe(item);
+    });
+
     return () => {
       document.documentElement.classList.remove('no-scrollbar');
       document.body.classList.remove('no-scrollbar');
+      revealItems.forEach((item) => observer.unobserve(item));
+      observer.disconnect();
     };
   }, []);
 
@@ -93,23 +118,36 @@ export default function Landing() {
         </nav>
 
         {/* Minimal High Conversion Hero Section */}
-        <main className="relative z-10 flex flex-col items-center justify-center pt-14 sm:pt-20 px-4 sm:px-6 text-center pb-8 sm:pb-12">          
-          <h1 className="text-[28px] sm:text-5xl md:text-6xl font-extrabold tracking-tight max-w-4xl leading-tight sm:leading-[1.1] mb-6 text-center">
-            Manage Tasks with Full <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-emerald-400">
-              Control
-            </span>{' '}
-            &{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-emerald-400">
-              Team Visibility
+        <main className="relative z-10 flex flex-col items-center justify-center pt-14 sm:pt-20 px-4 sm:px-6 text-center pb-8 sm:pb-12">
+          <h1
+            className="reveal-item text-[28px] sm:text-5xl md:text-6xl font-extrabold tracking-tight max-w-4xl leading-tight sm:leading-[1.1] mb-6 text-center"
+            data-reveal
+          >
+            <span className="block">Manage Tasks with Full</span>
+            <span className="mt-2 block">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-500">
+                Control
+              </span>{' '}
+              &{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-500">
+                Team Visibility
+              </span>
             </span>
           </h1>
-          
-          <p className="text-sm sm:text-lg text-slate-400 max-w-2xl mb-8 sm:mb-10 leading-relaxed px-2 sm:px-0">
-            Create tasks, assign them to your team, track progress, set due dates, and monitor every action with real-time updates and activity logs.
+
+          <p
+            className="reveal-item text-sm sm:text-lg text-slate-400 max-w-2xl mb-8 sm:mb-10 leading-relaxed px-2 sm:px-0"
+            data-reveal
+            data-delay="80"
+          >
+            Create and assign tasks, manage deadlines, track progress, and keep your entire team aligned with real-time updates.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full mt-1 drop-shadow-xl">
+          <div
+            className="reveal-item flex flex-col sm:flex-row items-center justify-center gap-4 w-full mt-1 drop-shadow-xl"
+            data-reveal
+            data-delay="140"
+          >
             <Link to="/register" className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-700 to-emerald-600 hover:from-emerald-500 hover:to-emerald-400 text-white font-semibold px-5 py-2.5 sm:px-6 sm:py-3 rounded-full transition-all shadow-md hover:shadow-emerald-700 active:scale-95 text-xs sm:text-base shrink-0">
               Get Started
               <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 opacity-80" />
@@ -120,14 +158,11 @@ export default function Landing() {
         {/* How TaskPilot Works Section - Vertical Zig-Zag SaaS Layout */}
         <section className="relative z-10 pt-4 sm:pt-6 pb-16 sm:pb-24 px-4 sm:px-8 max-w-7xl mx-auto">
           {/* Section Header */}
-          <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-3.5 backdrop-blur-sm shadow-sm">
-              <span>Role-Based Workflow</span>
-            </div>
+          <div className="reveal-item text-center max-w-3xl mx-auto mb-10 sm:mb-14" data-reveal data-delay="90">
             <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight mb-3">
               How Task<span className="text-emerald-500">Pilot</span> Works
             </h2>
-            <p className="text-sm sm:text-base text-slate-400 font-medium max-w-2xl mx-auto leading-relaxed">
+            <p className="text-sm sm:text-base text-slate-400 font-sans max-w-3xl mx-auto leading-relaxed">
               Learn how TaskPilot streamlines task assignment, execution, and account approvals across your team.
             </p>
           </div>
@@ -137,7 +172,7 @@ export default function Landing() {
             {/* 1. ADMIN (Green Accent) - Image on Left, Content on Right */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center">
               {/* Image Container (Left) */}
-              <div className="lg:col-span-5 relative group">
+              <div className="reveal-item lg:col-span-5 relative group" data-reveal data-delay="50">
                 <div className="absolute -inset-2 bg-gradient-to-r from-emerald-500/15 via-emerald-500/5 to-transparent rounded-2xl blur-xl pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity" />
                 <div className="relative p-2 sm:p-2.5 bg-slate-800/40 border border-slate-700/70 hover:border-emerald-500/40 rounded-2xl backdrop-blur-md shadow-2xl transition-all duration-300">
                   <div className="relative overflow-hidden rounded-xl h-[200px] sm:h-[250px] lg:h-[280px] bg-slate-900">
@@ -153,7 +188,7 @@ export default function Landing() {
               </div>
 
               {/* Content (Right) */}
-              <div className="lg:col-span-7 flex flex-col justify-center lg:pl-4">
+              <div className="reveal-item lg:col-span-7 flex flex-col justify-center lg:pl-4" data-reveal data-delay="110">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 w-fit mb-2.5">
                   <ShieldCheck className="w-3 h-3" />
                   <span>ADMIN ROLE</span>
@@ -200,7 +235,7 @@ export default function Landing() {
             {/* 2. MEMBER (Blue Accent) - Content on Left, Image on Right (Mobile: Image on Top) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center">
               {/* Content (Left on desktop, Bottom on mobile) */}
-              <div className="order-2 lg:order-1 lg:col-span-7 flex flex-col justify-center lg:pr-4">
+              <div className="reveal-item order-2 lg:order-1 lg:col-span-7 flex flex-col justify-center lg:pr-4" data-reveal data-delay="110">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20 w-fit mb-2.5">
                   <Users className="w-3 h-3" />
                   <span>MEMBER ROLE</span>
@@ -234,7 +269,7 @@ export default function Landing() {
               </div>
 
               {/* Image Container (Right on desktop, Top on mobile) */}
-              <div className="order-1 lg:order-2 lg:col-span-5 relative group">
+              <div className="reveal-item order-1 lg:order-2 lg:col-span-5 relative group" data-reveal data-delay="50">
                 <div className="absolute -inset-2 bg-gradient-to-r from-transparent via-sky-500/10 to-sky-500/15 rounded-2xl blur-xl pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity" />
                 <div className="relative p-2 sm:p-2.5 bg-slate-800/40 border border-slate-700/70 hover:border-sky-500/40 rounded-2xl backdrop-blur-md shadow-2xl transition-all duration-300">
                   <div className="relative overflow-hidden rounded-xl h-[200px] sm:h-[250px] lg:h-[280px] bg-slate-900">
@@ -263,7 +298,7 @@ export default function Landing() {
             {/* 3. PENDING USER (Orange Accent) - Image on Left, Content on Right */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center">
               {/* Image Container (Left) */}
-              <div className="lg:col-span-5 relative group">
+              <div className="reveal-item lg:col-span-5 relative group" data-reveal data-delay="50">
                 <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/15 via-orange-500/5 to-transparent rounded-2xl blur-xl pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity" />
                 <div className="relative p-2 sm:p-2.5 bg-slate-800/40 border border-slate-700/70 hover:border-amber-500/40 rounded-2xl backdrop-blur-md shadow-2xl transition-all duration-300">
                   <div className="relative overflow-hidden rounded-xl h-[200px] sm:h-[250px] lg:h-[280px] bg-slate-900">
@@ -279,7 +314,7 @@ export default function Landing() {
               </div>
 
               {/* Content (Right) */}
-              <div className="lg:col-span-7 flex flex-col justify-center lg:pl-4">
+              <div className="reveal-item lg:col-span-7 flex flex-col justify-center lg:pl-4" data-reveal data-delay="110">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 w-fit mb-2.5">
                   <Clock className="w-3 h-3" />
                   <span>PENDING USER ROLE</span>
@@ -319,7 +354,7 @@ export default function Landing() {
         {/* Frequently Asked Questions Section */}
         <section className="relative z-10 py-16 px-4 sm:px-12 border-t border-slate-700/60 bg-slate-900/60 backdrop-blur-md rounded-3xl mb-16 mx-4 sm:mx-8 shadow-2xl">
           <div className="max-w-3xl mx-auto">
-            <div className="text-center mb-12">
+            <div className="reveal-item text-center mb-12" data-reveal data-delay="80">
               <h2 className="text-2xl sm:text-4xl font-extrabold text-emerald-500 tracking-tight mb-3">
                 Frequently Asked Questions
               </h2>
@@ -334,7 +369,9 @@ export default function Landing() {
                 return (
                   <div
                     key={idx}
-                    className="border border-slate-700/60 rounded-2xl overflow-hidden bg-slate-800/40 backdrop-blur-sm transition-colors"
+                    className="reveal-item border border-slate-700/60 rounded-2xl overflow-hidden bg-slate-800/40 backdrop-blur-sm transition-colors"
+                    data-reveal
+                    data-delay={idx * 70}
                   >
                     <button
                       type="button"

@@ -14,7 +14,6 @@ import RejectedUser from './pages/RejectedUser';
 import AccountBlocked from './pages/AccountBlocked';
 import ContactUs from './pages/ContactUs';
 import { useAuth } from './context/AuthContext';
-import Loader from './components/Loader';
 
 // Protects routes for authenticated users only
 const PrivateRoute = ({ children }) => {
@@ -56,9 +55,7 @@ const ChatRoute = ({ children }) => {
 };
 
 function App() {
-  const { user, loading } = useAuth();
-
-  if (loading) return <Loader message="Loading App..." />;
+  const { user } = useAuth();
 
   return (
     <Routes>

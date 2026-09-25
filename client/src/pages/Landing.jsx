@@ -172,14 +172,14 @@ export default function Landing() {
             {/* 1. ADMIN (Green Accent) - Image on Left, Content on Right */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center">
               {/* Image Container (Left) */}
-              <div className="reveal-item lg:col-span-5 relative group" data-reveal data-delay="50">
+              <div className="lg:col-span-5 relative group" data-delay="50">
                 <div className="absolute -inset-2 bg-gradient-to-r from-emerald-500/15 via-emerald-500/5 to-transparent rounded-2xl blur-xl pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity" />
                 <div className="relative p-2 sm:p-2.5 bg-slate-800/40 border border-slate-700/70 hover:border-emerald-500/40 rounded-2xl backdrop-blur-md shadow-2xl transition-all duration-300">
                   <div className="relative overflow-hidden rounded-xl h-[200px] sm:h-[250px] lg:h-[280px] bg-slate-900">
                     <img
                       src="/images/how-admin.jpg"
                       alt="Admin directing strategic operations and monitoring team"
-                      className="w-full h-full object-cover object-center transform transition-transform duration-700 group-hover:scale-105"
+                      className="w-full h-full object-cover object-center"
                       loading="lazy"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent pointer-events-none" />
@@ -269,14 +269,14 @@ export default function Landing() {
               </div>
 
               {/* Image Container (Right on desktop, Top on mobile) */}
-              <div className="reveal-item order-1 lg:order-2 lg:col-span-5 relative group" data-reveal data-delay="50">
+              <div className="order-1 lg:order-2 lg:col-span-5 relative group" data-delay="50">
                 <div className="absolute -inset-2 bg-gradient-to-r from-transparent via-sky-500/10 to-sky-500/15 rounded-2xl blur-xl pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity" />
                 <div className="relative p-2 sm:p-2.5 bg-slate-800/40 border border-slate-700/70 hover:border-sky-500/40 rounded-2xl backdrop-blur-md shadow-2xl transition-all duration-300">
                   <div className="relative overflow-hidden rounded-xl h-[200px] sm:h-[250px] lg:h-[280px] bg-slate-900">
                     <img
                       src="/images/how-member.jpg"
                       alt="Team members collaborating and completing tasks together"
-                      className="w-full h-full object-cover object-center transform transition-transform duration-700 group-hover:scale-105"
+                      className="w-full h-full object-cover object-center"
                       loading="lazy"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent pointer-events-none" />
@@ -298,14 +298,14 @@ export default function Landing() {
             {/* 3. PENDING USER (Orange Accent) - Image on Left, Content on Right */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center">
               {/* Image Container (Left) */}
-              <div className="reveal-item lg:col-span-5 relative group" data-reveal data-delay="50">
+              <div className="lg:col-span-5 relative group" data-delay="50">
                 <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/15 via-orange-500/5 to-transparent rounded-2xl blur-xl pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity" />
                 <div className="relative p-2 sm:p-2.5 bg-slate-800/40 border border-slate-700/70 hover:border-amber-500/40 rounded-2xl backdrop-blur-md shadow-2xl transition-all duration-300">
                   <div className="relative overflow-hidden rounded-xl h-[200px] sm:h-[250px] lg:h-[280px] bg-slate-900">
                     <img
                       src="/images/how-pending.jpg"
                       alt="New professional registering and awaiting admin approval"
-                      className="w-full h-full object-cover object-center transform transition-transform duration-700 group-hover:scale-105"
+                      className="w-full h-full object-cover object-center"
                       loading="lazy"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent pointer-events-none" />

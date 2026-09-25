@@ -2,6 +2,8 @@
 
 TaskPilot is a full-stack MERN application for team collaboration and task management. Admin can create tasks, assign them to team members, track progress, and communicate through real-time team chat.
 
+![TaskPilot Landing Page](screenshots/landing-page.png)
+
 ## Features
 
 * 🔐 Secure Authentication & Authorization using JWT

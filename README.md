@@ -1,6 +1,6 @@
 # TaskPilot - Collaborative Task Management Platform
 
-TaskPilot is a full-stack MERN application for team collaboration and task management. Admin can create tasks, assign them to team members, track progress, and communicate through real-time team chat.
+TaskPilot is a full-stack application for team collaboration and task management. Admin can create tasks, assign them to team members, track progress, and communicate through real-time team chat.
 
 ![TaskPilot Landing Page](screenshots/landing-page.png)
 
@@ -54,8 +54,25 @@ TaskPilot is a full-stack MERN application for team collaboration and task manag
 ```text
 TaskPilot/
 ├── client/
+│   ├── public/
+│   ├── src/
+│   ├── Dockerfile
+│   ├── package.json
+│   └── vite.config.js
+│
 ├── server/
+│   ├── config/
+│   ├── controllers/
+│   ├── middleware/
+│   ├── models/
+│   ├── routes/
+│   ├── services/
+│   ├── utils/
+│   └── server.js
+│
+├── screenshots/
 ├── docker-compose.yml
+├── .gitignore
 └── README.md
 ```
 
@@ -64,7 +81,7 @@ TaskPilot/
 ### Clone Repository
 
 ```bash
-git clone <https://github.com/Priyanshu12334/taskpilot>
+git clone https://github.com/Priyanshu12334/taskpilot.git
 cd taskpilot
 ```
 
@@ -100,29 +117,31 @@ GEMINI_API_KEY=your_gemini_api_key
 
 ## Run Locally
 
-Backend:
+Start Backend:
 
 ```bash
 cd server
 npm start
 ```
 
-Frontend:
+Start Frontend:
 
 ```bash
 cd client
 npm run dev
 ```
 
+The frontend will be available at the Vite development URL shown in the terminal.
+
 ## Run with Docker
 
-Build and start all services:
+Build and start the services:
 
 ```bash
 docker compose up --build
 ```
 
-Stop all services:
+Stop the services:
 
 ```bash
 docker compose down
@@ -142,5 +161,6 @@ docker compose down
 
 Priyanshu Suyal
 
-Portfolio: https://portfolio-ten-blond-87.vercel.app
+* Linkedin: https://www.linkedin.com/in/priyanshu-suyal-5732b224a
+* Portfolio: https://portfolio-ten-blond-87.vercel.app
  

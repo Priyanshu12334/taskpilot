@@ -70,7 +70,6 @@ TaskPilot/
 │   ├── utils/
 │   └── server.js
 │
-├── screenshots/
 ├── docker-compose.yml
 ├── .gitignore
 └── README.md

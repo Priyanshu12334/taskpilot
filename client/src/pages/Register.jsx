@@ -59,7 +59,7 @@ export default function Register() {
       <div className="w-full max-w-[420px] bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl p-5 sm:p-8 relative z-10 box-border">
         <div className="text-center mb-4 sm:mb-5">
           <div className="bg-gradient-to-br from-slate-700 to-slate-700 w-10 h-10 sm:w-12 sm:h-12 rounded-3xl sm:rounded-3xl mx-auto flex items-center justify-center mb-2 sm:mb-3 shadow-lg shadow-black/50 border border-slate-700/50">
-            <span className="text-[12px] sm:text-[14px] font-black tracking-widest text-white">TP</span>
+            <span className="text-[12px] sm:text-[14px] font-black tracking-widest text-white">T<span className="text-emerald-600">P</span></span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-emerald-500 tracking-tight mb-0.5 sm:mb-1">Create Account</h1>
           <p className="text-slate-400 text-[11px] sm:text-sm font-semibold">Join TaskPilot workspace today.</p>

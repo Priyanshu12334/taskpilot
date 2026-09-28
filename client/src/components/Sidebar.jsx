@@ -82,7 +82,7 @@ const SidebarContent = ({ user, navItems, setOpen, handleLogout, isLoggingOut })
         <div className="relative">
           <div className="absolute inset-0 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           <div className="relative w-8 h-8 bg-gradient-to-br from-slate-700 to-slate-700 rounded-3xl flex items-center justify-center shadow-lg shadow-black/50 border border-slate-800/50 transform transition-transform group-hover:scale-105">
-            <span className="text-[12px] font-black tracking-widest text-white">TP</span>
+            <span className="text-[12px] font-black tracking-widest text-white">T<span className="text-emerald-600">P</span></span>
           </div>
         </div>
         <div>
@@ -190,7 +190,7 @@ export default function Sidebar() {
       <div className="sm:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-4 bg-gradient-to-br from-slate-600/30 to-slate-900 backdrop-blur-xl border-b border-slate-700/50">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-gradient-to-br from-slate-700 to-slate-700 rounded-3xl flex items-center justify-center shadow-lg shadow-black/50 border border-slate-700/30">
-             <span className="text-[12px] font-black tracking-widest text-white">TP</span>
+             <span className="text-[12px] font-black tracking-widest text-white">T<span className="text-emerald-600">P</span></span>
           </div>
           <h2 className="text-lg text-white tracking-tight">
             Task<span className="font-bold text-emerald-500">Pilot</span>

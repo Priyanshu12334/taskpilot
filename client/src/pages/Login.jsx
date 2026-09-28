@@ -52,7 +52,7 @@ export default function Login() {
       <div className="w-full max-w-[400px] bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl p-6 sm:p-8 relative z-10 box-border">
         <div className="text-center mb-5">
           <div className="bg-gradient-to-br from-slate-700 to-slate-700 w-12 h-12 rounded-3xl mx-auto flex items-center justify-center mb-3 shadow-lg shadow-black/50 border border-slate-700/50">
-            <span className="text-[14px] font-black tracking-widest text-white">TP</span>
+            <span className="text-[14px] font-black tracking-widest text-white">T<span className="text-emerald-600">P</span></span>
           </div>
           <h1 className="text-2xl font-bold text-emerald-500 tracking-tight mb-1">Welcome Back</h1>
           <p className="text-slate-400 text-sm font-semibold">Login to your TaskPilot account</p>

@@ -103,7 +103,7 @@ export default function Landing() {
         <nav className="relative z-10 px-4 sm:px-12 py-4 sm:py-6 flex items-center justify-between border-b border-slate-700">
           <div className="flex items-center gap-1">
             <div className="w-10 h-10 bg-gradient-to-br from-slate-700 to-slate-700 rounded-3xl flex items-center justify-center shadow-lg shadow-black/50 border border-slate-700/50">
-              <span className="text-[14px] font-black tracking-widest text-white">TP</span>
+              <span className="text-[14px] font-black tracking-widest text-white">T<span className="text-emerald-600">P</span></span>
             </div>
             <h2 className="text-xl sm:text-2xl tracking-tight">Task<span className="font-bold text-emerald-500">Pilot</span></h2>
           </div>

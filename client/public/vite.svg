@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <circle cx="32" cy="32" r="32" fill="#262626"/>
+  <text x="32" y="34" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="30" font-weight="900" text-anchor="middle" dominant-baseline="central" letter-spacing="-1">
+    <tspan fill="#FFFFFF">T</tspan><tspan fill="#059669">P</tspan>
+  </text>
+</svg>

@@ -13,15 +13,16 @@ const {
   deleteContactMessage
 } = require('../controllers/userController');
 const { protect, admin } = require('../middleware/authMiddleware');
+const { passwordLimiter, contactLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
 
 // Both routes are strictly protected by JWT verification
 router.put('/update', protect, updateProfile);
-router.put('/password', protect, updatePassword);
+router.put('/password', protect, passwordLimiter, updatePassword);
 router.get('/all', protect, getAllUsers);
 router.get('/assignable', protect, getAssignableUsers);
-router.post('/contact', protect, submitContactMessage);
+router.post('/contact', protect, contactLimiter, submitContactMessage);
 router.get('/contact', protect, admin, getContactMessages);
 router.patch('/contact/:id/read', protect, admin, markContactMessageRead);
 router.patch('/contact/:id/resolve', protect, admin, markContactMessageResolved);

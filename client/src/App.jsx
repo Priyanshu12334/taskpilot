@@ -13,6 +13,7 @@ import PendingApproval from './pages/PendingApproval';
 import RejectedUser from './pages/RejectedUser';
 import AccountBlocked from './pages/AccountBlocked';
 import ContactUs from './pages/ContactUs';
+import Loader from './components/Loader';
 import { useAuth } from './context/AuthContext';
 
 // Protects routes for authenticated users only

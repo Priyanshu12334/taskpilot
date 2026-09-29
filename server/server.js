@@ -9,6 +9,7 @@ const { connectRedis } = require('./config/redis');
 const authRoutes = require('./routes/authRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const userRoutes = require('./routes/userRoutes');
+const { apiLimiter } = require('./middleware/rateLimiter');
 const Message = require('./models/Message');
 
 // Load environment variables from .env file
@@ -25,6 +26,7 @@ const allowedOrigins = [
 ];
 
 const app = express();
+app.set('trust proxy', 1);
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -100,6 +102,7 @@ app.use(cors({
   credentials: true
 })); // Allow cross-origin requests (e.g., from our React frontend)
 app.use(express.json()); // Allow parsing of incoming JSON payloads
+app.use('/api', apiLimiter); // Apply general API rate limiting to all /api endpoints
 
 // Mount Routes
 app.use('/api/auth', authRoutes);

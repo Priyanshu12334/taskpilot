@@ -15,6 +15,7 @@ import AccountBlocked from './pages/AccountBlocked';
 import ContactUs from './pages/ContactUs';
 import Loader from './components/Loader';
 import { useAuth } from './context/AuthContext';
+import { isApprovalPending } from './utils/roleUtils';
 
 // Protects routes for authenticated users only
 const PrivateRoute = ({ children }) => {
@@ -55,6 +56,11 @@ const ChatRoute = ({ children }) => {
   return <AccessRestricted />;
 };
 
+const TasksRoute = () => {
+  const { user } = useAuth();
+  return isApprovalPending(user) ? <PendingApproval /> : <Dashboard />;
+};
+
 function App() {
   const { user } = useAuth();
 
@@ -69,6 +75,7 @@ function App() {
       <Route path="/rejected" element={<Navigate to="/dashboard" replace />} />
 
       <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+      <Route path="/tasks" element={<PrivateRoute><TasksRoute /></PrivateRoute>} />
       <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
       <Route path="/chat" element={<ChatRoute><Chat /></ChatRoute>} />
       <Route path="/contact" element={<PrivateRoute><ContactUs /></PrivateRoute>} />

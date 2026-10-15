@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { Loader2, Plus, Edit2, Trash2, Check, User, AlertTriangle, X, History, Clock, RefreshCw, ChevronDown, CheckCircle2, UserPlus, MessageSquare, Send, Lock, LayoutGrid, Calendar, Sparkles, ChevronLeft, ChevronRight, CheckSquare } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Loader2, Plus, Edit2, Trash2, Check, User, AlertTriangle, X, History, Clock, RefreshCw, ChevronDown, CheckCircle2, UserPlus, MessageSquare, Send, Lock, LayoutGrid, Calendar, Sparkles, ChevronLeft, ChevronRight, CheckSquare, ListTodo, ArrowRight } from 'lucide-react';
 import api from '../services/api';
 import { socket } from '../socket';
 import clsx from 'clsx';
@@ -273,6 +273,8 @@ const TaskSkeleton = () => (
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isTasksPage = location.pathname === '/tasks';
 
   // 🛡️ Loading Guard: Ensure user data is available before rendering any dependent logic
   if (!user) return <Loader message="Initializing Dashboard..." />;
@@ -533,11 +535,16 @@ export default function Dashboard() {
 
   // 2. Handle Add Task Submit
   const [taskError, setTaskError] = useState('');
+  const [taskCreated, setTaskCreated] = useState(false);
+  const taskCreatedTimer = useRef(null);
+  const taskSubmitLock = useRef(false);
   
   const handleAddTask = async (e) => {
     e.preventDefault();
+    if (taskSubmitLock.current || isAddingTask) return;
     console.log('[handleAddTask] Form submitted');
     setTaskError('');
+    setTaskCreated(false);
     
     if (!title.trim()) {
       console.warn('[handleAddTask] Title is empty, aborting');
@@ -554,6 +561,7 @@ export default function Dashboard() {
     console.log('[handleAddTask] Sending payload:', payload);
 
     setIsAddingTask(true);
+    taskSubmitLock.current = true;
     try {
       const res = await api.post('/tasks', payload);
       console.log('[handleAddTask] ✅ Task created:', res.data);
@@ -564,15 +572,23 @@ export default function Dashboard() {
       setStatus('Pending');
       setAssignedTo('');
       setDueDate('');
+      setTaskCreated(true);
+      if (taskCreatedTimer.current) clearTimeout(taskCreatedTimer.current);
+      taskCreatedTimer.current = setTimeout(() => setTaskCreated(false), 3500);
     } catch (error) {
       const msg = error.response?.data?.message || error.message || 'Failed to create task';
       console.error('[handleAddTask] ❌ Error:', error.response?.status, msg);
       console.error('[handleAddTask] Full error:', error);
       setTaskError(`Error ${error.response?.status || ''}: ${msg}`);
     } finally {
+      taskSubmitLock.current = false;
       setIsAddingTask(false);
     }
   };
+
+  useEffect(() => () => {
+    if (taskCreatedTimer.current) clearTimeout(taskCreatedTimer.current);
+  }, []);
 
   // 3. Handle Delete Task
   const handleDeleteTask = async (taskId) => {
@@ -695,12 +711,12 @@ export default function Dashboard() {
       <Sidebar />
 
       {/* Main Content Area */}
-      <main className="flex-1 sm:overflow-y-auto no-scrollbar min-h-screen sm:h-full pt-40 sm:pt-10 p-5 sm:p-14 relative z-10">
-        <header className="mb-10 flex items-center justify-between">
+      <main className={clsx("flex-1 sm:overflow-y-auto no-scrollbar min-h-screen sm:h-full pt-40 p-5 relative z-10", isTasksPage ? "sm:pt-8 sm:px-8 lg:px-10" : "sm:pt-10 sm:p-14")}>
+        <header className={clsx("flex items-center justify-between", isTasksPage ? "mb-6" : "mb-10")}>
           <div>
-            <h1 className="text-2xl font-bold text-white mb-2">Hi, <span className="text-emerald-500">{user?.name || 'User'}</span></h1>
+            <h1 className="text-2xl font-bold text-white mb-2">{isTasksPage ? 'Your Tasks' : <>Hi, <span className="text-emerald-500">{user?.name || 'User'}</span></>}</h1>
             <p className="text-slate-400 text-sm font-medium">
-              {user?.role?.toLowerCase() === 'simpleuser' 
+              {isTasksPage ? 'Manage tasks, track progress, and keep your team in sync.' : user?.role?.toLowerCase() === 'simpleuser'
                 ? "Your account is awaiting admin approval. You'll get full access once your account is approved."
                 : 'Here are your active tasks for today.'}
             </p>
@@ -803,6 +819,7 @@ export default function Dashboard() {
           <PendingUserTutorial />
         ) : (
           <>
+            {!isTasksPage && <>
             {/* Stats Cards Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-y-3 gap-x-3 sm:gap-x-4 mb-12">
           {loadingTasks ? (
@@ -935,12 +952,29 @@ export default function Dashboard() {
           )}
           </div>
         </div>
+        <button
+          type="button"
+          onClick={() => navigate('/tasks')}
+          className="group mt-6 w-full rounded-2xl bg-[#1e2225] p-4 sm:p-5 text-left shadow-sm shadow-black/10 transition-all duration-300 hover:scale-[1.01] hover:bg-[#1e2225] focus-visible:ring-2 focus-visible:ring-emerald-500/50"
+        >
+          <span className="flex items-center gap-4">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
+              <ListTodo className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-white">Your Tasks</span>
+              <span className="mt-1 block text-xs text-slate-400">View and manage all your tasks.</span>
+            </span>
+            <ArrowRight className="h-4 w-4 shrink-0 text-slate-500 transition-all group-hover:translate-x-1 group-hover:text-emerald-400" aria-hidden="true" />
+          </span>
+        </button>
+        </>}
 
-        <div>
+        {isTasksPage && <div>
           {/* Add Task Form Section */}
           {user?.role?.toLowerCase() === 'admin' && (
-          <div className="bg-slate-900 border border-slate-700/50 rounded-2xl p-6 shadow-lg mb-8">
-            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+          <div className="bg-slate-900/80 border border-slate-700/40 rounded-2xl p-4 sm:p-5 shadow-lg mb-5">
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <Plus className="w-5 h-5 text-emerald-400" /> Create Task
             </h2>
             
@@ -949,8 +983,7 @@ export default function Dashboard() {
                 {taskError}
               </div>
             )}
-            
-            <form onSubmit={handleAddTask} className="space-y-6">
+            <form onSubmit={handleAddTask} className="space-y-4">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 {/* Row 1 Col 1: Task Title */}
                 <div className="col-span-12 lg:col-span-4">
@@ -1119,15 +1152,21 @@ export default function Dashboard() {
                 </div>
               </div>
             </form>
+            {taskCreated && (
+              <div role="status" className="task-success-message flex items-center gap-2 text-emerald-300 text-xs font-medium mt-3">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>Task created successfully.</span>
+              </div>
+            )}
           </div>
           )}
 
           {/* Task List Section */}
           <div className="w-full">
-            <div className="bg-slate-900 border border-slate-700/50 rounded-2xl p-6 min-h-[400px]">
+            <div className="bg-slate-900/80 border border-slate-700/40 rounded-2xl p-4 sm:p-5 min-h-[400px]">
               <div className="flex flex-col gap-4 mb-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <h2 className="text-xl font-bold">Your Tasks</h2>
+                  <h2 className="text-xl font-bold">{isTasksPage ? 'Task list' : 'Your Tasks'}</h2>
                   <div className="flex flex-wrap gap-2">
                     {['All', 'Pending', 'In Progress', 'Completed', 'Overdue'].map(f => (
                       <button 
@@ -1138,10 +1177,10 @@ export default function Dashboard() {
                           filter === f 
                             ? clsx(
                                 f === 'All' && "bg-slate-600 text-white border-slate-800",
-                                f === 'Pending' && "bg-amber-600 text-white border-amber-600 shadow-md shadow-amber-600/20",
-                                f === 'In Progress' && "bg-cyan-600 text-white border-sky-700 shadow-md shadow-sky-600/20",
-                                f === 'Completed' && "bg-emerald-600 text-white border-green-600 shadow-md shadow-green-600/20",
-                                f === 'Overdue' && "bg-red-800 text-white border-red-700 shadow-md shadow-red-600/20"
+                                f === 'Pending' && "bg-amber-500/15 text-amber-200 border-amber-500/30",
+                                f === 'In Progress' && "bg-sky-500/15 text-sky-200 border-sky-500/30",
+                                f === 'Completed' && "bg-emerald-500/15 text-emerald-200 border-emerald-500/30",
+                                f === 'Overdue' && "bg-red-500/15 text-red-200 border-red-500/30"
                               )
                             : "bg-transparent border-slate-700 text-gray-400 hover:border-slate-500"
                         )}
@@ -1241,7 +1280,7 @@ export default function Dashboard() {
                       className={clsx(
                         "rounded-xl p-3 sm:p-4 transition-all duration-200 border shadow-sm shadow-black/20 hover:-translate-y-0.5 hover:shadow-md hover:bg-slate-800/70",
                         editingTask === task._id ? "overflow-visible" : "overflow-hidden",
-                        "bg-slate-800/50 border-[#303832] hover:border-slate-600/70"
+                        "bg-slate-800/35 border-slate-700/50 hover:border-slate-600/70"
                       )}
                     >
                       
@@ -1413,10 +1452,11 @@ export default function Dashboard() {
                             <div className="mt-2 flex flex-wrap items-center gap-2">
                                 <span className={clsx(
                                   "text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap",
-                                  isOverdue && "bg-red-600 text-red-100 border border-red-400/50 shadow-[0_0_10px_rgba(220,38,38,0.3)]",
-                                  !isOverdue && task.status === "Pending" && "bg-amber-600 text-amber-100 border border-amber-400/50 shadow-[0_0_10px_rgba(202,138,4,0.3)]",
-                                  !isOverdue && task.status === "In Progress" && "bg-cyan-600 text-cyan-100 border border-cyan-400/50 shadow-[0_0_10px_rgba(2,132,199,0.3)]",
-                                  task.status === "Completed" && "bg-emerald-600 text-emerald-100 border border-emerald-400/50 shadow-[0_0_10px_rgba(5,150,105,0.3)]"
+                                  "border",
+                                  isOverdue && "bg-red-500/10 text-red-300 border-red-500/20",
+                                  !isOverdue && task.status === "Pending" && "bg-amber-500/10 text-amber-300 border-amber-500/20",
+                                  !isOverdue && task.status === "In Progress" && "bg-sky-500/10 text-sky-300 border-sky-500/20",
+                                  task.status === "Completed" && "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
                                 )}>
                                   {isOverdue ? "Overdue" : task.status}
                                 </span>
@@ -1529,7 +1569,7 @@ export default function Dashboard() {
             </div>
           </div>
           
-        </div>
+        </div>}
         </>
         )}
       </main>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock, LogOut, Loader2, ShieldCheck, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { isApprovalPending } from '../utils/roleUtils';
 
 export default function PendingApproval() {
   const { logout, user, refreshProfile } = useAuth();
@@ -10,8 +11,8 @@ export default function PendingApproval() {
 
   // Auto-redirect once role changes
   useEffect(() => {
-    if (user && user.role !== 'Pending') {
-      navigate('/dashboard', { replace: true });
+    if (user && !isApprovalPending(user)) {
+      navigate('/tasks', { replace: true });
     }
   }, [user, navigate]);
 
@@ -24,9 +25,8 @@ export default function PendingApproval() {
     setChecking(true);
     try {
       const refreshedUser = await refreshProfile();
-      if (refreshedUser && refreshedUser.role !== 'Pending') {
-        // Redirect will be handled by useEffect, but we can speed it up
-        navigate('/dashboard', { replace: true });
+      if (refreshedUser && !isApprovalPending(refreshedUser)) {
+        navigate('/tasks', { replace: true });
       }
     } finally {
       // Simulate small delay for better UX feel
@@ -67,7 +67,7 @@ export default function PendingApproval() {
             <span className="text-xs font-bold uppercase tracking-widest text-emerald-500/80">Verifying Identity</span>
           </div>
           <p className="text-[11px] text-slate-500 leading-relaxed mt-2 relative z-10">
-            Access to dashboard and team chat is restricted until your role is updated by the system admin.
+            Task management and team chat unlock after an administrator approves your account.
           </p>
         </div>
 

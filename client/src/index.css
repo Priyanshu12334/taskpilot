@@ -164,6 +164,15 @@
     animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
+  @keyframes task-success-in-out {
+    0% { opacity: 0; transform: translateY(-3px); }
+    12%, 78% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-2px); }
+  }
+  .task-success-message {
+    animation: task-success-in-out 3.5s ease both;
+  }
+
   @keyframes gradient-shift {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }

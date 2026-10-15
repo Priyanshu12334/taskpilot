@@ -16,10 +16,13 @@ const TaskProgressBar = ({ stats, loading }) => {
   ];
 
   const radius = 40;
-  const circumference = 2 * Math.PI * radius;
+  // Normalize each dashed circle to the same exact path length. A slight
+  // overlap hides subpixel antialiasing seams between segments at small sizes.
+  const ringLength = 100;
+  const segmentOverlap = 0.25;
   let offset = 0;
   const segments = rows.map(row => {
-    const length = total > 0 ? (row.count / total) * circumference : 0;
+    const length = total > 0 ? (row.count / total) * ringLength : 0;
     const segment = { ...row, length, offset };
     offset += length;
     return segment;
@@ -40,7 +43,8 @@ const TaskProgressBar = ({ stats, loading }) => {
               <circle
                 key={label}
                 cx="50" cy="50" r={radius} fill="none" stroke={stroke} strokeWidth="9"
-                strokeDasharray={`${length} ${circumference - length}`}
+                pathLength={ringLength}
+                strokeDasharray={`${Math.min(ringLength, length + (length < ringLength ? segmentOverlap : 0))} ${Math.max(0, ringLength - length - (length < ringLength ? segmentOverlap : 0))}`}
                 strokeDashoffset={-segmentOffset}
                 className="transition-all duration-700 ease-out"
               />

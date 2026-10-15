@@ -2,17 +2,18 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
-  LayoutDashboard, MessageSquare, Settings, Users,
+  LayoutDashboard, ListTodo, MessageSquare, Settings, Users,
   LogOut, Loader2, X, Menu, Lock, HelpCircle
 } from 'lucide-react';
 import api from '../services/api';
 import clsx from 'clsx';
 import NotificationDropdown from './NotificationDropdown';
-import { getRoleDetails } from '../utils/roleUtils';
+import { getRoleDetails, isApprovalPending } from '../utils/roleUtils';
 
 // ─── Nav config ──────────────────────────────────────────
 const BASE_NAV = [
   { label: 'Dashboard',   icon: LayoutDashboard, path: '/dashboard'   },
+  { label: 'Your Tasks',  icon: ListTodo,         path: '/tasks'       },
   { label: 'Team Chat',   icon: MessageSquare,   path: '/chat', requiresChat: true },
   { label: 'Settings',    icon: Settings,        path: '/settings'    },
   { label: 'Contact Us',  icon: HelpCircle,      path: '/contact'     },
@@ -20,7 +21,7 @@ const BASE_NAV = [
 const ADMIN_NAV = { label: 'Users', icon: Users, path: '/admin/users' };
 
 // ─── Reusable SidebarItem ────────────────────────────────
-function SidebarItem({ path, icon: Icon, label, onClick, disabled, lockedMessage }) {
+function SidebarItem({ path, icon: Icon, label, onClick, onLockedClick, disabled, lockedMessage }) {
   const content = (isActive) => (
     <>
       <div className={clsx(
@@ -42,6 +43,9 @@ function SidebarItem({ path, icon: Icon, label, onClick, disabled, lockedMessage
     return (
       <li className="relative group/item list-none">
         <button
+          type="button"
+          onClick={onLockedClick}
+          aria-label={`${label} locked: ${lockedMessage}`}
           className="flex items-center gap-2.5 w-full px-3 py-1.5 rounded-xl text-slate-200 opacity-60 cursor-not-allowed transition-all duration-200"
         >
           {content(false)}
@@ -113,16 +117,18 @@ const SidebarContent = ({ user, navItems, setOpen, handleLogout, isLoggingOut })
         <p className="px-4 text-[10px] font-bold text-slate-200 uppercase tracking-[0.2em] mb-3">Main Menu</p>
         <ul className="space-y-0.5">
           {navItems.map(item => {
-            const isSimpleUser = user?.role?.toLowerCase() === 'simpleuser';
+            const isSimpleUser = isApprovalPending(user);
+            const taskLocked = item.path === '/tasks' && isApprovalPending(user);
             const isChatDisabled = item.requiresChat && (isSimpleUser || (!user?.canAccessChat && user?.role?.toLowerCase() !== 'admin'));
             
             return (
               <SidebarItem
                 key={item.path}
                 {...item}
-                disabled={isChatDisabled}
-                lockedMessage={isSimpleUser ? "Promote to Member to unlock" : "Admin restricted access"}
+                disabled={taskLocked || isChatDisabled}
+                lockedMessage={taskLocked ? "Available after admin approval" : isSimpleUser ? "Promote to Member to unlock" : "Admin restricted access"}
                 onClick={() => setOpen(false)}
+                onLockedClick={taskLocked ? () => { setOpen(false); navigate('/tasks'); } : undefined}
               />
             );
           })}

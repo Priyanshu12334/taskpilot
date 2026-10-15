@@ -52,3 +52,8 @@ export const getRoleDetails = (role) => {
     summaryTextClass: 'text-amber-400'
   };
 };
+
+export const isApprovalPending = (user) => {
+  const role = user?.role?.toLowerCase();
+  return user?.status?.toLowerCase() === 'pending' || ['simpleuser', 'pending', 'pendinguser'].includes(role);
+};

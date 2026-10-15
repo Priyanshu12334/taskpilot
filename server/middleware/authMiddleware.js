@@ -55,10 +55,10 @@ const admin = (req, res, next) => {
   }
 };
 
-// Middleware to check if user has at least simpleUser access (Legacy 'approved')
+// Middleware to protect task management and team chat from accounts awaiting approval.
 const approved = (req, res, next) => {
   const role = req.user?.role?.toLowerCase();
-  const status = req.user?.status;
+  const status = req.user?.status?.toLowerCase();
 
   if (status === 'blocked' || role === 'rejected') {
     return res.status(403).json({ 
@@ -67,13 +67,14 @@ const approved = (req, res, next) => {
     });
   }
 
-  // New system: simpleUser, member, and admin are all "approved" to enter the app
-  // But they might have different feature sets.
-  if (['admin', 'member', 'simpleuser', 'pending'].includes(role)) {
+  if (['admin', 'member'].includes(role) && status !== 'pending') {
     return next();
   }
 
-  res.status(403).json({ message: 'Access denied.' });
+  res.status(403).json({
+    message: 'Task and chat access is available after admin approval.',
+    errorCode: 'APPROVAL_REQUIRED'
+  });
 };
 
 module.exports = { protect, admin, approved };

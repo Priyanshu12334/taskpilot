@@ -82,7 +82,7 @@ let cachedUsers = null;
 let cachedAdminStats = null;
 
 const AdminStatsSkeletonCard = () => (
-  <div className="bg-slate-700/30 border border-slate-700/50 p-6 rounded-2xl shimmer-wrapper animate-pulse-subtle min-h-[92px]">
+  <div className="bg-slate-800/50 border border-slate-700/40 p-4 rounded-2xl shimmer-wrapper animate-pulse-subtle min-h-[92px]">
     <div className="h-7 w-12 bg-slate-700/50 rounded mb-2"></div>
     <div className="h-3.5 w-24 bg-slate-700/50 rounded"></div>
   </div>
@@ -90,11 +90,11 @@ const AdminStatsSkeletonCard = () => (
 
 const UserRowSkeleton = () => (
   <tr className="animate-pulse-subtle border-b border-slate-700/30">
-    <td className="px-6 py-5">
+    <td className="px-4 py-3">
       <div className="h-4 w-4 bg-slate-800 rounded"></div>
     </td>
-    <td className="px-6 py-5">
-      <div className="flex items-center gap-4">
+    <td className="px-4 py-3">
+      <div className="flex items-center gap-3">
         <div className="w-11 h-11 rounded-[14px] bg-slate-800 shrink-0"></div>
         <div className="min-w-0 flex-1 space-y-2">
           <div className="h-4 w-24 bg-slate-800 rounded"></div>
@@ -103,14 +103,14 @@ const UserRowSkeleton = () => (
         </div>
       </div>
     </td>
-    <td className="px-6 py-5">
+    <td className="px-4 py-3">
       <div className="flex flex-col gap-1.5 items-start">
         <div className="h-5 w-16 bg-slate-800 rounded-full"></div>
         <div className="h-4.5 w-12 bg-slate-800 rounded-md"></div>
       </div>
     </td>
-    <td className="px-6 py-5">
-      <div className="flex items-center justify-end gap-3">
+    <td className="px-4 py-3">
+      <div className="flex items-center justify-end gap-2">
         <div className="h-8 w-24 bg-slate-800 rounded-xl"></div>
         <div className="h-6 w-px bg-slate-700/50"></div>
         <div className="h-8 w-32 bg-slate-800 rounded-xl"></div>
@@ -120,7 +120,7 @@ const UserRowSkeleton = () => (
 );
 
 const UserCardSkeleton = () => (
-  <div className="bg-slate-800/20 border border-slate-700/50 rounded-2xl p-5 space-y-4 shadow-xl animate-pulse-subtle">
+  <div className="bg-slate-800/30 border border-slate-700/40 rounded-2xl p-4 space-y-3 shadow-md animate-pulse-subtle">
     <div className="flex items-center gap-4">
       <div className="w-12 h-12 rounded-2xl bg-slate-800 shrink-0"></div>
       <div className="min-w-0 flex-1 space-y-2">
@@ -517,7 +517,7 @@ export default function AdminUsers() {
             </div>
 
             {/* Stats Overview */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-8">
               {loading ? (
                 <>
                   <AdminStatsSkeletonCard />
@@ -533,28 +533,20 @@ export default function AdminUsers() {
                   { label: 'Admins', val: stats.admins, color: 'emerald' },
                   { label: 'Blocked', val: stats.blockedUsers, color: 'red' }
                 ].map((stat) => (
-                  <div 
-                    key={stat.label} 
-                    className={clsx(
-                      "border p-6 rounded-2xl transition-all hover:shadow-xl",
-                      stat.color === 'slate'   ? 'bg-slate-500/10 border-slate-700/50 hover:shadow-black/20' :
-                      stat.color === 'yellow'  ? 'bg-amber-500/10 border-amber-500/20 hover:shadow-black/20' :
-                      stat.color === 'red'     ? 'bg-red-500/10 border-red-500/20 hover:shadow-black/20' :
-                      stat.color === 'emerald' ? 'bg-emerald-500/10 border-emerald-500/20 hover:shadow-black/20' :
-                      stat.color === 'sky'     ? 'bg-sky-500/10 border-sky-500/20 hover:shadow-black/20' :
-                      'bg-slate-900 border-slate-700/50'
-                    )}
+                  <div
+                    key={stat.label}
+                    className="min-h-[92px] bg-slate-800/50 border border-slate-700/40 p-4 rounded-2xl transition-shadow hover:shadow-md hover:shadow-black/20"
                   >
                     <div>
                       <p className={clsx(
-                        "text-2xl font-bold",
+                        "text-xl font-bold",
                         stat.color === 'slate' ? 'text-white' : 
                         stat.color === 'yellow' ? 'text-amber-400' :
                         stat.color === 'red' ? 'text-red-400' :
                         stat.color === 'emerald' ? 'text-emerald-400' : 
-                        stat.color === 'sky' ? 'text-sky-400' : 'text-white'
+                        stat.color === 'sky' ? 'text-cyan-400' : 'text-white'
                       )}>{stat.val}</p>
-                      <p className="text-sm font-medium text-slate-500 uppercase tracking-wide">{stat.label}</p>
+                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{stat.label}</p>
                     </div>
                   </div>
                 ))
@@ -562,15 +554,15 @@ export default function AdminUsers() {
             </div>
 
             {/* Filters & Actions Bar */}
-            <div className="bg-slate-900 border border-slate-700/50 p-4 rounded-2xl mb-6 flex flex-col md:flex-row gap-4 items-center">
+            <div className="bg-slate-900 border border-slate-700/50 p-3 rounded-2xl mb-5 flex flex-col md:flex-row gap-3 items-center">
               <div className="relative flex-1 w-full">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input
                   type="text"
                   placeholder="Filter by name, email, or role..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700/50 rounded-xl pl-11 pr-4 py-3 text-sm font-medium text-slate-200 placeholder-slate-500 outline-none focus:border-slate-500/50 transition-colors"
+                  className="w-full bg-slate-800 border border-slate-700/50 rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium text-slate-200 placeholder-slate-500 outline-none focus:border-slate-500/50 transition-colors"
                 />
               </div>
               <div className="flex p-1 bg-slate-900/50 border border-slate-700/50 rounded-xl w-full md:w-auto overflow-x-auto no-scrollbar">
@@ -579,7 +571,7 @@ export default function AdminUsers() {
                     key={r}
                     onClick={() => setFilterRole(r)}
                     className={clsx(
-                      'flex-1 md:flex-none px-6 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap border',
+                      'flex-1 md:flex-none px-4 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap border',
                       filterRole === r
                         ? r === 'All' ? 'bg-slate-800 text-white border-slate-700 shadow-lg' :
                           r === 'simpleUser' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30 shadow-lg shadow-amber-500/10' :
@@ -602,10 +594,10 @@ export default function AdminUsers() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-900 border-b border-slate-700/50">
-                      <th className="px-6 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">#</th>
-                      <th className="px-6 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Profile</th>
-                      <th className="px-6 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Role</th>
-                      <th className="px-6 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
+                      <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">#</th>
+                      <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Profile</th>
+                      <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Role</th>
+                      <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-700/30">
@@ -632,13 +624,13 @@ export default function AdminUsers() {
                         const isAdmin = u.role === 'Admin';
                         return (
                           <tr key={u._id} className="hover:bg-slate-700/20 transition-colors group">
-                            <td className="px-6 py-5">
+                            <td className="px-4 py-3">
                               <span className="text-xs font-medium text-slate-600 group-hover:text-slate-400 transition-colors">
                                 {String(startIndex + idx + 1).padStart(2, '0')}
                               </span>
                             </td>
-                            <td className="px-6 py-5">
-                              <div className="flex items-center gap-4">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-3">
                                 <div className={clsx(
                                   'w-11 h-11 rounded-[14px] flex items-center justify-center font-bold text-base shrink-0 border-2 transition-transform group-hover:scale-105',
                                   getRoleDetails(u.role).avatarClass
@@ -656,7 +648,7 @@ export default function AdminUsers() {
                                   </div>
                                   <p className="text-xs text-slate-500 font-medium truncate mt-0.5">{u.email}</p>
                                   <div 
-                                    className="mt-2 py-1 px-2 bg-slate-900/40 rounded-lg text-[10px] text-slate-500 font-medium border border-slate-700/30 group-hover:border-slate-700/60 transition-all cursor-help"
+                                    className="mt-1.5 py-0.5 px-2 bg-slate-900/40 rounded-lg text-[10px] text-slate-500 font-medium border border-slate-700/30 group-hover:border-slate-700/60 transition-all cursor-help"
                                     title={u.purpose || "No purpose provided"}
                                   >
                                     <span className="text-slate-600 font-bold uppercase text-[9px] mr-1">Purpose:</span>
@@ -669,14 +661,14 @@ export default function AdminUsers() {
                                 </div>
                               </div>
                             </td>
-                            <td className="px-6 py-5">
+                            <td className="px-4 py-3">
                               <div className="flex flex-col gap-1 items-start">
                                 <RoleBadge role={u.role} />
                                 <StatusBadge status={u.status} role={u.role} />
                               </div>
                             </td>
-                            <td className="px-6 py-5">
-                              <div className="flex items-center justify-end gap-3 translate-x-2 group-hover:translate-x-0 transition-transform">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center justify-end gap-2 translate-x-2 group-hover:translate-x-0 transition-transform">
                                 <ChatAccessButton u={u} />
                                 <div className="h-6 w-px bg-slate-700/50" />
                                 <ActionButton u={u} />
@@ -710,9 +702,9 @@ export default function AdminUsers() {
                   return (
                     <div
                       key={u._id}
-                      className="bg-slate-800/30 border border-slate-700/50 rounded-2xl p-5 space-y-4 shadow-xl"
+                      className="bg-slate-800/30 border border-slate-700/40 rounded-2xl p-4 space-y-3 shadow-md"
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3">
                         <div className={clsx(
                           'w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg shrink-0 border-2',
                           getRoleDetails(u.role).avatarClass
@@ -736,7 +728,7 @@ export default function AdminUsers() {
                         <RoleBadge role={u.role} />
                       </div>
 
-                      <div className="pt-4 border-t border-slate-700/50 flex flex-col gap-2.5">
+                      <div className="pt-3 border-t border-slate-700/50 flex flex-col gap-2">
                         <ChatAccessButton u={u} />
                         <ActionButton u={u} />
                       </div>

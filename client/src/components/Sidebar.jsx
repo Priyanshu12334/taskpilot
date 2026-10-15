@@ -24,7 +24,7 @@ function SidebarItem({ path, icon: Icon, label, onClick, disabled, lockedMessage
   const content = (isActive) => (
     <>
       <div className={clsx(
-        "w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-200 group-hover:scale-110",
+        "w-9 h-9 flex items-center justify-center rounded-lg transition-all duration-200 group-hover:scale-110",
         isActive ? "text-white" : "text-slate-500 group-hover:text-slate-300"
       )}>
         <Icon className="w-5 h-5 shrink-0" />
@@ -42,7 +42,7 @@ function SidebarItem({ path, icon: Icon, label, onClick, disabled, lockedMessage
     return (
       <li className="relative group/item list-none">
         <button
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-slate-200 opacity-60 cursor-not-allowed transition-all duration-200"
+          className="flex items-center gap-2.5 w-full px-3 py-1.5 rounded-xl text-slate-200 opacity-60 cursor-not-allowed transition-all duration-200"
         >
           {content(false)}
         </button>
@@ -60,7 +60,7 @@ function SidebarItem({ path, icon: Icon, label, onClick, disabled, lockedMessage
         onClick={onClick}
         className={({ isActive }) =>
           clsx(
-            'group flex items-center gap-3 w-full px-3 py-2 rounded-xl transition-all duration-200 select-none border-l-1 border-transparent',
+            'group flex items-center gap-2.5 w-full px-3 py-1.5 rounded-xl transition-all duration-200 select-none border-l-1 border-transparent',
             isActive
               ? 'bg-gradient-to-r from-white/5 to-transparent text-white border-l-white/5 shadow-sm'
               : 'text-slate-500 hover:text-white hover:bg-white/5'
@@ -77,7 +77,7 @@ function SidebarItem({ path, icon: Icon, label, onClick, disabled, lockedMessage
 const SidebarContent = ({ user, navItems, setOpen, handleLogout, isLoggingOut }) => (
   <div className="flex flex-col h-full">
     {/* Header / Logo */}
-    <div className="flex items-center justify-between mb-10 px-2">
+    <div className="flex items-center justify-between mb-7 px-2">
       <div className="flex items-center gap-2 group">
         <div className="relative">
           <div className="absolute inset-0 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -108,10 +108,10 @@ const SidebarContent = ({ user, navItems, setOpen, handleLogout, isLoggingOut })
     </div>
 
     {/* Nav Section */}
-    <div className="flex-1 overflow-y-auto no-scrollbar space-y-8">
+    <div className="flex-1 overflow-y-auto no-scrollbar space-y-6">
       <div>
-        <p className="px-4 text-[10px] font-bold text-slate-200 uppercase tracking-[0.2em] mb-4">Main Menu</p>
-        <ul className="space-y-1">
+        <p className="px-4 text-[10px] font-bold text-slate-200 uppercase tracking-[0.2em] mb-3">Main Menu</p>
+        <ul className="space-y-0.5">
           {navItems.map(item => {
             const isSimpleUser = user?.role?.toLowerCase() === 'simpleuser';
             const isChatDisabled = item.requiresChat && (isSimpleUser || (!user?.canAccessChat && user?.role?.toLowerCase() !== 'admin'));
@@ -131,11 +131,11 @@ const SidebarContent = ({ user, navItems, setOpen, handleLogout, isLoggingOut })
     </div>
 
     {/* Footer / User Profile */}
-    <div className="mt-auto pt-6 border-t border-slate-800 space-y-4">
-      <div className="flex items-center gap-3 p-2 rounded-2xl bg-slate-800 border-none group hover:bg-white/5 transition-colors duration-200">
+    <div className="mt-auto pt-4 border-t border-slate-800 space-y-3">
+      <div className="flex items-center gap-2.5 p-1.5 rounded-2xl bg-slate-800 border-none group hover:bg-white/5 transition-colors duration-200">
         <div className="relative">
           <div className={clsx(
-            'w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shadow-inner',
+            'w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shadow-inner',
             getRoleDetails(user?.role).sidebarAvatarClass
           )}>
             {user?.name?.charAt(0).toUpperCase()}
@@ -152,7 +152,7 @@ const SidebarContent = ({ user, navItems, setOpen, handleLogout, isLoggingOut })
       <button
         onClick={handleLogout}
         disabled={isLoggingOut}
-        className=" flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-slate-500 text-sm font-bold hover:bg-slate-500/10 hover:text-slate-400 transition-all active:scale-[0.98] disabled:opacity-50 group"
+        className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-slate-500 text-sm font-bold hover:bg-slate-500/10 hover:text-slate-400 transition-all active:scale-[0.98] disabled:opacity-50 group"
       >
         {isLoggingOut
           ? <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
@@ -217,14 +217,14 @@ export default function Sidebar() {
 
       {/* Mobile Sidebar */}
       <div className={clsx(
-        'sm:hidden fixed top-0 left-0 h-full w-72 z-[70] bg-gradient-to-br from-slate-900 to-slate-900 p-6 transition-transform duration-300 ease-in-out shadow-2xl',
+        'sm:hidden fixed top-0 left-0 h-full w-72 z-[70] bg-gradient-to-br from-slate-900 to-slate-900 p-5 transition-transform duration-300 ease-in-out shadow-2xl',
         open ? 'translate-x-0' : '-translate-x-full'
       )}>
         <SidebarContent {...contentProps} />
       </div>
 
       {/* Desktop Sidebar */}
-      <nav className="hidden sm:flex w-64 shrink-0 bg-gradient-to-br from-slate-900 to-slate-900 p-5 flex-col sticky top-0 h-screen z-50">
+      <nav className="hidden sm:flex w-64 shrink-0 bg-gradient-to-br from-slate-900 to-slate-900 p-4 flex-col sticky top-0 h-screen z-50">
         <SidebarContent {...contentProps} />
       </nav>
     </>

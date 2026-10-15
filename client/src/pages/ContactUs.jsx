@@ -314,10 +314,6 @@ export default function ContactUs() {
             <p className="text-sm text-slate-300 font-medium leading-relaxed mb-3">
               Have a question, found an issue, or need assistance with your TaskPilot account? Send us a message and our team will get back to you.
             </p>
-            <p className="text-xs text-slate-400 font-medium flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
-              Whether you're an Admin, Member, or waiting for account approval, you can contact us anytime.
-            </p>
           </div>
         </div>
 
@@ -879,11 +875,6 @@ export default function ContactUs() {
             <div>
               <h2 className="text-xl font-bold text-white mb-6">Get in touch</h2>
 
-              {/* Developer Profile Header */}
-              <div className="mb-6 p-4 rounded-xl bg-slate-800/80 border border-slate-700/50">
-                <h3 className="text-base font-bold text-white">Priyanshu Suyal</h3>
-                <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wider mt-0.5">Full Stack Developer</p>
-              </div>
 
               {/* Contact Links */}
               <div className="space-y-4">

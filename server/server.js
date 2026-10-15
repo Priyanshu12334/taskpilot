@@ -12,7 +12,6 @@ const userRoutes = require('./routes/userRoutes');
 const { apiLimiter } = require('./middleware/rateLimiter');
 const Message = require('./models/Message');
 
-// Load environment variables from .env file
 dotenv.config();
 
 // Connect to the database

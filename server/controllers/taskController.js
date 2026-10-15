@@ -103,6 +103,10 @@ const getTasks = async (req, res) => {
     }
     // (Admin: no filter → sees all tasks)
 
+    // Keep the role-scoped visibility query separate from list filters so
+    // dashboard statistics always represent all tasks visible to this user.
+    const visibilityQuery = { ...query };
+
     console.log(`[getTasks] User: ${req.user.name} | Role: ${req.user.role} | Base query:`, JSON.stringify(query));
 
     if (status && status !== 'All') {
@@ -117,16 +121,29 @@ const getTasks = async (req, res) => {
     }
 
     if (search) {
-      query.$or = [
+      const searchQuery = { $or: [
         { title: { $regex: search, $options: 'i' } },
         { description: { $regex: search, $options: 'i' } }
-      ];
+      ] };
+
+      if (query.$or) {
+        query.$and = [
+          { $or: query.$or },
+          searchQuery
+        ];
+        delete query.$or;
+      } else {
+        Object.assign(query, searchQuery);
+      }
     }
 
     const sortOption = sort === 'latest' ? { createdAt: -1 } : { createdAt: 1 };
     const skip = (page - 1) * limit;
 
-    const cacheKey = getTaskCacheKey(req.user._id, req.query);
+    // Use a new cache namespace so prior filter-scoped stats are not served
+    // until their old entries expire.
+    const baseCacheKey = getTaskCacheKey(req.user._id, req.query);
+    const cacheKey = baseCacheKey ? `${baseCacheKey}:stats-v2` : null;
     if (cacheKey) {
       const cachedData = await getCache(cacheKey);
       if (cachedData) {
@@ -142,14 +159,14 @@ const getTasks = async (req, res) => {
     const totalMatchingTasks = await taskService.countTasks(query);
     const tasks = await taskService.getTasks(query, sortOption, skip, parseInt(limit));
 
-    // Dashboard stats calculation via service using the SAME visibility query
-    const statsData = await taskService.getTaskStats(query);
+    // Stats remain independent of status, search, sort, and pagination filters.
+    const statsData = await taskService.getTaskStats(visibilityQuery);
     
     // Add overdue count calculation
     const todayForStats = new Date();
     todayForStats.setHours(0, 0, 0, 0);
     const overdueQuery = {
-      ...query,
+      ...visibilityQuery,
       status: { $ne: 'Completed' },
       dueDate: { $lt: todayForStats }
     };

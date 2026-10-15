@@ -9,7 +9,8 @@ import Sidebar from '../components/Sidebar';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import Loader from '../components/Loader';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import TaskProgressBar from '../components/TaskProgressBar';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
 dayjs.extend(relativeTime);
 
@@ -803,7 +804,7 @@ export default function Dashboard() {
         ) : (
           <>
             {/* Stats Cards Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-6 mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-y-3 gap-x-3 sm:gap-x-4 mb-12">
           {loadingTasks ? (
             <>
               <StatsSkeletonCard />
@@ -815,41 +816,52 @@ export default function Dashboard() {
           ) : (
             <>
               {/* Total Tasks */}
-              <div className="bg-slate-700/50 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col justify-center shadow-lg shadow-black/10 transition-all duration-300 hover:scale-[1.02] hover:bg-slate-500/10">
-                <h3 className="text-slate-400 text-[10px] sm:text-xs font-bold mb-1 uppercase tracking-wider">Total Tasks</h3>
-                <p className="text-2xl sm:text-3xl font-bold text-white">{stats.total}</p>
+              <div className="min-h-[104px] rounded-2xl p-3 sm:p-4 flex flex-col justify-center shadow-sm shadow-black/10 transition-transform duration-300 hover:scale-[1.02]" style={{ backgroundColor: '#252B2F' }}>
+                <h3 className="text-slate-400 text-[10px] sm:text-xs font-semibold mb-1 uppercase tracking-wider">Total Tasks</h3>
+                <p className="text-[28px] leading-none font-bold text-white">{stats.total}</p>
+                <p className="text-xs font-medium text-slate-400 mt-1">Tasks in workspace</p>
               </div>
               
               {/* Pending Tasks */}
-              <div className="bg-amber-500/20 rounded-2xl p-4 sm:p-5 flex flex-col justify-center shadow-lg shadow-black/10 transition-all duration-300 hover:scale-[1.02] hover:bg-yellow-500/15">
-                <h3 className="text-slate-400 text-[10px] sm:text-xs font-bold mb-1 uppercase tracking-wider">Pending</h3>
-                <p className="text-2xl sm:text-3xl font-bold text-amber-500">{stats.pending}</p>
+              <div className="min-h-[104px] rounded-2xl p-3 sm:p-4 flex flex-col justify-center shadow-sm shadow-black/10 transition-transform duration-300 hover:scale-[1.02]" style={{ backgroundColor: '#252B2F' }}>
+                <h3 className="text-slate-400 text-[10px] sm:text-xs font-semibold mb-1 uppercase tracking-wider">Pending</h3>
+                <p className="text-[28px] leading-none font-bold text-amber-500">{stats.pending}</p>
+                <p className="text-xs font-medium text-slate-400 mt-1">Not started yet</p>
               </div>
               
               {/* In Progress Tasks */}
-              <div className="bg-sky-500/20 rounded-2xl p-4 sm:p-5 flex flex-col justify-center shadow-lg shadow-black/10 transition-all duration-300 hover:scale-[1.02] hover:bg-sky-500/15">
-                <h3 className="text-slate-400 text-[10px] sm:text-xs font-bold mb-1 uppercase tracking-wider">In Progress</h3>
-                <p className="text-2xl sm:text-3xl font-bold text-sky-500">{stats.inProgress || 0}</p>
+              <div className="min-h-[104px] rounded-2xl p-3 sm:p-4 flex flex-col justify-center shadow-sm shadow-black/10 transition-transform duration-300 hover:scale-[1.02]" style={{ backgroundColor: '#252B2F' }}>
+                <h3 className="text-slate-400 text-[10px] sm:text-xs font-semibold mb-1 uppercase tracking-wider">In Progress</h3>
+                <p className="text-[28px] leading-none font-bold text-sky-500">{stats.inProgress || 0}</p>
+                <p className="text-xs font-medium text-slate-400 mt-1">Work underway</p>
               </div>
               
               {/* Completed Tasks */}
-              <div className="bg-emerald-500/20 rounded-2xl p-4 sm:p-5 flex flex-col justify-center shadow-lg shadow-black/10 transition-all duration-300 hover:scale-[1.02] hover:bg-emerald-500/15">
-                <h3 className="text-slate-400 text-[10px] sm:text-xs font-bold mb-1 uppercase tracking-wider">Completed</h3>
-                <p className="text-2xl sm:text-3xl font-bold text-emerald-500">{stats.completed}</p>
+              <div className="min-h-[104px] rounded-2xl p-3 sm:p-4 flex flex-col justify-center shadow-sm shadow-black/10 transition-transform duration-300 hover:scale-[1.02]" style={{ backgroundColor: '#252B2F' }}>
+                <h3 className="text-slate-400 text-[10px] sm:text-xs font-semibold mb-1 uppercase tracking-wider">Completed</h3>
+                <p className="text-[28px] leading-none font-bold text-emerald-500">{stats.completed}</p>
+                <p className="text-xs font-medium text-slate-400 mt-1">Successfully finished</p>
               </div>
               
               {/* Overdue Tasks */}
-              <div className="bg-red-500/20 rounded-2xl p-4 sm:p-5 flex flex-col justify-center shadow-lg shadow-black/10 transition-all duration-300 hover:scale-[1.02] hover:bg-red-500/15">
-                <h3 className="text-slate-400 text-[10px] sm:text-xs font-bold mb-1 uppercase tracking-wider">Overdue</h3>
-                <p className="text-2xl sm:text-3xl font-bold text-red-500">{stats.overdue || 0}</p>
+              <div className="min-h-[104px] rounded-2xl p-3 sm:p-4 flex flex-col justify-center shadow-sm shadow-black/10 transition-transform duration-300 hover:scale-[1.02]" style={{ backgroundColor: '#252B2F' }}>
+                <h3 className="text-slate-400 text-[10px] sm:text-xs font-semibold mb-1 uppercase tracking-wider">Overdue</h3>
+                <p className="text-[28px] leading-none font-bold text-red-500">{stats.overdue || 0}</p>
+                <p className="text-xs font-medium text-slate-400 mt-1">Past deadline</p>
               </div>
             </>
           )}
         </div>
 
-        {/* Weekly Task Activity Chart */}
-        <div className="bg-slate-900 border border-slate-700/50 rounded-2xl p-6 mb-12 shadow-lg">
-          <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+        {/* Overall Progress and Weekly Task Activity */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-8 items-stretch">
+          <div className="lg:col-span-4 min-w-0">
+            <TaskProgressBar stats={stats} loading={loadingTasks} />
+          </div>
+
+          {/* Weekly Task Activity Chart */}
+          <div className="lg:col-span-8 min-w-0 bg-slate-900 border border-slate-700/50 rounded-2xl p-4 sm:p-5 shadow-lg">
+          <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-emerald-400" /> {chartTitle}
           </h2>
           {loadingWeekly ? (
@@ -873,22 +885,24 @@ export default function Dashboard() {
               )}
             </div>
           ) : (
-            <div className="h-44 sm:h-48 w-full min-w-0 relative overflow-hidden">
+            <div className="h-44 sm:h-48 w-full min-w-0 relative overflow-hidden" style={{ top: '25px' }}>
               <ResponsiveContainer width="100%" height="100%" minWidth={0} debounce={50}>
-                <LineChart data={weeklyActivity} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} />
+                <AreaChart data={weeklyActivity} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="weeklyTaskActivityFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.28} />
+                      <stop offset="100%" stopColor="#10b981" stopOpacity={0.01} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid horizontal vertical={false} stroke="#64748b" strokeDasharray="3 5" opacity={0.18} />
                   <XAxis 
                     dataKey="day" 
-                    stroke="#94a3b8" 
-                    fontSize={12} 
-                    fontWeight={500} 
+                    tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 500 }}
                     tickLine={false} 
                     axisLine={false} 
                   />
                   <YAxis 
-                    stroke="#94a3b8" 
-                    fontSize={12} 
-                    fontWeight={500} 
+                    tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 500 }}
                     tickLine={false} 
                     axisLine={false}
                     allowDecimals={false}
@@ -902,19 +916,24 @@ export default function Dashboard() {
                     }}
                     labelStyle={{ fontWeight: 'bold', color: '#10b981' }}
                   />
-                  <Line 
+                  <Area
                     type="monotone" 
                     dataKey="count" 
                     name={tooltipLabel}
-                    stroke="#10b981" 
-                    strokeWidth={3} 
-                    activeDot={{ r: 8, stroke: '#064e3b', strokeWidth: 2 }} 
-                    dot={{ r: 4, stroke: '#10b981', strokeWidth: 2, fill: '#1e293b' }}
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    fill="url(#weeklyTaskActivityFill)"
+                    activeDot={{ r: 4, stroke: '#064e3b', strokeWidth: 1.5, fill: '#34d399' }}
+                    dot={{ r: 2.5, stroke: '#34d399', strokeWidth: 1, fill: '#0f0f0f' }}
+                    isAnimationActive
+                    animationDuration={900}
+                    animationEasing="ease-in-out"
                   />
-                </LineChart>
+                </AreaChart>
               </ResponsiveContainer>
             </div>
           )}
+          </div>
         </div>
 
         <div>
@@ -1202,7 +1221,7 @@ export default function Dashboard() {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-5">
+                <div className="space-y-3">
                   {displayTasks.map(task => {
                     const todayDate = new Date();
                     todayDate.setHours(0,0,0,0);
@@ -1216,27 +1235,13 @@ export default function Dashboard() {
                     const isOverdue = task.status !== 'Completed' && diffDays !== null && diffDays < 0;
                     const isDueSoon = task.status !== 'Completed' && diffDays !== null && (diffDays === 0 || diffDays === 1);
                     
-                    // Priority-based style classes
-                    let cardClass = "bg-slate-900/50 border-slate-700";
-                    if (isOverdue) {
-                      cardClass = "bg-red-500/10 border-red-400 shadow-red-500/5";
-                    } else if (isDueSoon) {
-                      cardClass = "bg-amber-500/10 border-amber-400 shadow-amber-500/5";
-                    } else if (task.status === "Completed") {
-                      cardClass = "border-green-500 bg-slate-900/50";
-                    } else if (task.status === "In Progress") {
-                      cardClass = "border-sky-400 bg-slate-900/50";
-                    } else if (task.status === "Pending") {
-                      cardClass = "border-yellow-400 bg-slate-900/50";
-                    }
-
                     return (
                     <div 
                       key={task._id} 
                       className={clsx(
-                        "rounded-xl p-5 transition-all duration-300 border shadow-lg",
+                        "rounded-xl p-3 sm:p-4 transition-all duration-200 border shadow-sm shadow-black/20 hover:-translate-y-0.5 hover:shadow-md hover:bg-slate-800/70",
                         editingTask === task._id ? "overflow-visible" : "overflow-hidden",
-                        cardClass
+                        "bg-slate-800/50 border-[#303832] hover:border-slate-600/70"
                       )}
                     >
                       
@@ -1395,17 +1400,17 @@ export default function Dashboard() {
                         </form>
                       ) : (
                         /* === NORMAL VIEW MODE === */
-                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2.5 sm:gap-3">
                           <div className="flex-overflow-hidden">
-                            <h3 className="text-md font-semibold text-white break-words">
+                            <h3 className="text-base font-semibold text-white break-words">
                               {task.title}
                             </h3>
                             {task.description && (
-                              <p className="text-sm mt-1 break-words text-slate-300">
+                              <p className="text-[13px] leading-relaxed mt-0.5 break-words text-slate-300">
                                 {task.description}
                               </p>
                             )}
-                            <div className="mt-3 flex flex-wrap items-center gap-3">
+                            <div className="mt-2 flex flex-wrap items-center gap-2">
                                 <span className={clsx(
                                   "text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap",
                                   isOverdue && "bg-red-600 text-red-100 border border-red-400/50 shadow-[0_0_10px_rgba(220,38,38,0.3)]",
@@ -1439,11 +1444,11 @@ export default function Dashboard() {
                             
                             {/* Mini Log Preview */}
                             {task.activityLog?.length > 0 && (
-                              <div className="mt-4 pt-3 border-t border-slate-800/50">
-                                <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+                              <div className="mt-3 pt-2.5 border-t border-slate-800/50">
+                                <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
                                   <Clock className="w-3 h-3" /> Recent Activity
                                 </div>
-                                <div className="space-y-1.5">
+                                <div className="space-y-1">
                                   {[...task.activityLog].slice(-2).reverse().map((log, i) => (
                                     <div key={i} className="flex items-start gap-2 text-[11px]">
                                       <span className="text-emerald-500 font-bold shrink-0">•</span>

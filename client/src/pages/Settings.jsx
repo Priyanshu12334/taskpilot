@@ -255,7 +255,7 @@ export default function Settings() {
             {/* Change Password */}
             <div className="bg-slate-900 backdrop-blur-xl border border-slate-700 rounded-2xl p-5 sm:p-7 shadow-2xl">
               <div className="flex items-center gap-3 mb-5 pb-3 border-b border-slate-700/30">
-                <div className="p-1.5 bg-emerald-500/10 rounded-lg">
+                <div className="p-1.5 rounded-lg">
                   <Lock className="w-4 h-4 text-emerald-500" />
                 </div>
                 <h2 className="text-lg font-bold text-white uppercase tracking-tight">Change Password</h2>
@@ -342,7 +342,7 @@ export default function Settings() {
 
               <div className="mt-6 pt-5 border-t border-slate-700/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-200">Logout</h3>
+                  <h3 className="text-sm font-bold text-slate-200">Logout</h3>
                   <p className="mt-1 text-xs text-slate-500">Sign out of your TaskPilot account.</p>
                 </div>
                 <button

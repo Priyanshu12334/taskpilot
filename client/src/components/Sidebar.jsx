@@ -175,11 +175,30 @@ export default function Sidebar() {
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(min-width: 640px)');
-    const updateViewport = (event) => setIsDesktop(event.matches);
+    const updateViewport = (event) => {
+      setIsDesktop(event.matches);
+      if (event.matches) setOpen(false);
+    };
     setIsDesktop(mediaQuery.matches);
     mediaQuery.addEventListener('change', updateViewport);
     return () => mediaQuery.removeEventListener('change', updateViewport);
   }, []);
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [open]);
 
   const role = user?.role?.toLowerCase();
   const navItems = role === 'admin'
@@ -203,28 +222,45 @@ export default function Sidebar() {
         <div className="flex items-center gap-2">
           {!isDesktop && ['admin', 'member'].includes(user?.role?.toLowerCase()) && <NotificationDropdown />}
           <button
-            onClick={() => setOpen(true)}
-            className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"
+            type="button"
+            onClick={() => setOpen(current => !current)}
+            aria-label={open ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={open}
+            aria-controls="mobile-navigation-drawer"
+            className="relative flex h-10 w-10 items-center justify-center rounded-xl text-slate-300 transition-colors duration-200 hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/70 motion-reduce:transition-none"
           >
-            <Menu className="w-5 h-5" />
+            <Menu className={clsx('absolute h-5 w-5 transition-all duration-200 motion-reduce:transition-none', open ? 'rotate-90 scale-75 opacity-0' : 'rotate-0 scale-100 opacity-100')} />
+            <X className={clsx('absolute h-5 w-5 transition-all duration-200 motion-reduce:transition-none', open ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-75 opacity-0')} />
           </button>
         </div>
       </div>
 
       {/* Mobile Backdrop */}
-      {open && (
-        <div
-          className="sm:hidden fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm transition-opacity duration-300"
-          onClick={() => setOpen(false)}
-        />
-      )}
+      <div
+        aria-hidden="true"
+        className={clsx(
+          'sm:hidden fixed inset-0 z-[60] bg-black/55 backdrop-blur-[2px] transition-opacity duration-300 motion-reduce:transition-none',
+          open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
+        )}
+        onClick={() => setOpen(false)}
+      />
 
       {/* Mobile Sidebar */}
       <div className={clsx(
-        'sm:hidden fixed top-0 left-0 h-full w-72 z-[70] bg-gradient-to-br from-slate-900 to-slate-900 p-5 transition-transform duration-300 ease-in-out shadow-2xl',
-        open ? 'translate-x-0' : '-translate-x-full'
+        'sm:hidden fixed inset-y-0 left-0 z-[70] h-dvh w-[min(20rem,calc(100vw_-_2.5rem))] overflow-y-auto bg-slate-900 p-5 shadow-2xl shadow-black/40 transition-transform duration-300 ease-out motion-reduce:transition-none',
+        open ? 'translate-x-0' : '-translate-x-full pointer-events-none'
       )}>
+        <div
+          id="mobile-navigation-drawer"
+          role="dialog"
+          aria-modal={open ? 'true' : undefined}
+          aria-label="Mobile navigation"
+          aria-hidden={!open}
+          inert={!open}
+          className="h-full"
+        >
         <SidebarContent {...contentProps} />
+        </div>
       </div>
 
       {/* Desktop Sidebar */}

@@ -6,9 +6,24 @@ const apiLimiter = rateLimit({
   limit: 500, // Max 500 requests per 15 minutes per IP
   standardHeaders: 'draft-8',
   legacyHeaders: false,
-  skip: (req) => req.path === '/health' || req.originalUrl === '/api/health',
+  skip: (req) => req.path === '/health'
+    || req.originalUrl === '/api/health'
+    || (req.method === 'GET' && req.originalUrl.split('?')[0].replace(/\/$/, '') === '/api/notifications'),
   message: {
     message: 'Too many requests from this IP, please try again after 15 minutes.'
+  }
+});
+
+// Authenticated notification reads use a per-user budget so shared IPs and
+// other dashboard reads do not exhaust the general API limit.
+const notificationReadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 120,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user._id.toString(),
+  message: {
+    message: 'Too many notification requests. Please try again in a few minutes.'
   }
 });
 
@@ -69,6 +84,7 @@ const passwordLimiter = rateLimit({
 
 module.exports = {
   apiLimiter,
+  notificationReadLimiter,
   authLimiter,
   registerLimiter,
   aiLimiter,

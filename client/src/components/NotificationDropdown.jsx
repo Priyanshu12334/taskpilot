@@ -16,7 +16,9 @@ export default function NotificationDropdown() {
   const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const dropdownRef = useRef(null);
+  const notificationsRequestRef = useRef(null);
 
   const [lastReadTimestamp, setLastReadTimestamp] = useState(
     localStorage.getItem(`lastRead_${user?._id}`) || 0
@@ -47,6 +49,23 @@ export default function NotificationDropdown() {
     socket.on(`notification_${user._id}`, (newNotif) => {
       setNotifications(prev => [newNotif, ...prev]);
     });
+    const handleProfilePhotoUpdated = ({ userId, name, profilePhotoUrl }) => {
+      if (!userId) return;
+      const senderId = userId.toString();
+      setNotifications(current => current.map(notification => (
+        notification.sender?._id?.toString() === senderId
+          ? {
+              ...notification,
+              sender: {
+                ...notification.sender,
+                name: name || notification.sender.name,
+                profilePhotoUrl: profilePhotoUrl || ''
+              }
+            }
+          : notification
+      )));
+    };
+    socket.on('profilePhotoUpdated', handleProfilePhotoUpdated);
 
     // Close on click outside
     const handleClickOutside = (e) => {
@@ -58,10 +77,11 @@ export default function NotificationDropdown() {
 
     return () => {
       socket.off(`notification_${user._id}`);
+      socket.off('profilePhotoUpdated', handleProfilePhotoUpdated);
       socket.disconnect();
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [user, isAllowed]);
+  }, [user?._id, user?.role, isAllowed]);
 
   const fetchNotifications = async () => {
     const userInfo = localStorage.getItem('userInfo');
@@ -71,12 +91,19 @@ export default function NotificationDropdown() {
 
     try {
       setLoading(true);
+      setLoadError(false);
       console.log('[NotificationDropdown] 🔔 Fetching notifications...');
-      const res = await api.get('/notifications');
+      if (!notificationsRequestRef.current) {
+        notificationsRequestRef.current = api.get('/notifications');
+      }
+      const request = notificationsRequestRef.current;
+      const res = await request;
       setNotifications(res.data);
     } catch (err) {
+      setLoadError(true);
       console.error('Failed to fetch notifications', err);
     } finally {
+      notificationsRequestRef.current = null;
       setLoading(false);
     }
   };
@@ -200,7 +227,7 @@ export default function NotificationDropdown() {
           <div className="max-h-[60vh] sm:max-h-96 overflow-y-auto no-scrollbar">
             {notifications.length === 0 ? (
               <div className="p-8 text-center text-slate-500">
-                <p className="text-sm">No notifications yet</p>
+                <p className="text-sm">{loadError ? 'Could not load notifications' : 'No notifications yet'}</p>
               </div>
             ) : (
               notifications.map((notif) => {
@@ -211,11 +238,16 @@ export default function NotificationDropdown() {
                       : !notif.isRead);
 
                 const isClickable = notif.type === 'registration' || notif.type === 'contact';
-                const avatarUser = notif.type === 'registration'
-                  ? notif.sender || { name: notif.message?.split(' has registered')[0] }
+                const legacySenderName = notif.type === 'registration'
+                  ? notif.message?.split(' has registered')[0]
                   : notif.type === 'contact'
-                    ? notif.sender || notif.contactMessageId?.sender || { name: notif.message?.split(' from ').pop() }
-                    : null;
+                    ? notif.message?.split(' from ').pop()
+                    : notif.type === 'completion'
+                      ? notif.message?.split(' completed ')[0]
+                      : '';
+                const avatarUser = notif.sender
+                  || notif.contactMessageId?.sender
+                  || (legacySenderName ? { name: legacySenderName } : null);
 
                 return (
                   <div 

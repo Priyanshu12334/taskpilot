@@ -1,4 +1,7 @@
 const Notification = require('../models/Notification');
+// Admin notification reads populate this model even when no support message
+// has been submitted yet in the current backend process.
+require('../models/ContactMessage');
 
 // @desc    Get all notifications for logged in user
 // @route   GET /api/notifications
@@ -11,6 +14,7 @@ const getNotifications = async (req, res) => {
       // Reuse Activity Log for Admin Notifications (as requested)
       // Find all tasks that have "Completed" in their activity log
       const Task = require('../models/Task');
+      const User = require('../models/User');
       const completionLogs = await Task.aggregate([
         { $unwind: "$activityLog" },
         { 
@@ -26,14 +30,38 @@ const getNotifications = async (req, res) => {
             _id: "$activityLog._id",
             message: { $concat: ["$activityLog.user", " completed '", "$title", "'"] },
             createdAt: "$activityLog.timestamp",
+            senderId: "$activityLog.userId",
+            senderName: "$activityLog.user",
             isRead: { $literal: false }, // Dynamic virtual read status
             type: { $literal: "completion" }
           }
         }
       ]);
+
+      const completionSenderIds = completionLogs.map(log => log.senderId).filter(Boolean);
+      const legacyCompletionSenderNames = [...new Set(completionLogs
+        .filter(log => !log.senderId)
+        .map(log => log.senderName)
+        .filter(Boolean))];
+      const [completionSenders, legacyCompletionSenders] = await Promise.all([
+        completionSenderIds.length
+          ? User.find({ _id: { $in: completionSenderIds } }).select('name role profilePhotoUrl').lean()
+          : [],
+        legacyCompletionSenderNames.length
+          ? User.find({ name: { $in: legacyCompletionSenderNames } }).select('name role profilePhotoUrl').lean()
+          : []
+      ]);
+      const completionSendersById = new Map(completionSenders.map(sender => [sender._id.toString(), sender]));
+      const legacyCompletionSendersByName = new Map(legacyCompletionSenders.map(sender => [sender.name, sender]));
+      completionLogs.forEach(log => {
+        log.sender = log.senderId
+          ? completionSendersById.get(log.senderId.toString()) || null
+          : legacyCompletionSendersByName.get(log.senderName) || null;
+        delete log.senderId;
+        delete log.senderName;
+      });
       
       // Fetch stored registration & contact notifications for admin
-      const User = require('../models/User');
       const registrationNotifications = await Notification.find({
         user: req.user._id,
         type: { $in: ['registration', 'contact'] }

@@ -13,7 +13,7 @@ const createNotification = async (req, userId, message, type = 'assignment') => 
       type
     });
     
-    const populated = await Notification.findById(notification._id).populate('sender', 'name role email').lean();
+    const populated = await Notification.findById(notification._id).populate('sender', 'name role email profilePhotoUrl').lean();
 
     // Emit real-time if io is available
     const io = req.app.get('io');
@@ -56,6 +56,7 @@ const createTask = async (req, res) => {
       activityLog: [{ 
         action: 'Task created', 
         user: req.user.name, 
+        userId: req.user._id,
         timestamp: new Date() 
       }]
     });
@@ -236,7 +237,7 @@ const updateTask = async (req, res) => {
       const lastLog = task.activityLog[task.activityLog.length - 1];
       if (lastLog && lastLog.action === message) return; // Prevent duplicate
       
-      task.activityLog.push({ action: message, user: req.user.name });
+      task.activityLog.push({ action: message, user: req.user.name, userId: req.user._id });
       
       // Limit to last 10 entries for performance
       if (task.activityLog.length > 10) {

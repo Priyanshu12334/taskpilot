@@ -1,9 +1,10 @@
 import axios from 'axios';
 
-const API =
+const configuredApiUrl =
   import.meta.env.MODE === "development"
     ? "http://localhost:5000"
     : import.meta.env.VITE_API_URL || "https://taskpilot-server.onrender.com";
+const API = configuredApiUrl.replace(/\/+$/, '').replace(/\/api$/i, '');
 
 const api = axios.create({
   baseURL: API + '/api',

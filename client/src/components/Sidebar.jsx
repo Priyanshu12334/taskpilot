@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -77,7 +77,7 @@ function SidebarItem({ path, icon: Icon, label, onClick, onLockedClick, disabled
 }
 
 // ─── Main Sidebar ────────────────────────────────────────
-const SidebarContent = ({ user, navItems, setOpen, navigate }) => (
+const SidebarContent = ({ user, navItems, setOpen, navigate, showNotifications }) => (
   <div className="flex flex-col h-full">
     {/* Header / Logo */}
     <div className="flex items-center justify-between mb-7 px-2">
@@ -96,7 +96,7 @@ const SidebarContent = ({ user, navItems, setOpen, navigate }) => (
       </div>
       
       <div className="flex items-center gap-2">
-        {['admin', 'member'].includes(user?.role?.toLowerCase()) && (
+        {showNotifications && ['admin', 'member'].includes(user?.role?.toLowerCase()) && (
           <div className="hidden sm:block">
             <NotificationDropdown />
           </div>
@@ -169,13 +169,24 @@ export default function Sidebar() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(() => (
+    typeof window !== 'undefined' && window.matchMedia('(min-width: 640px)').matches
+  ));
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 640px)');
+    const updateViewport = (event) => setIsDesktop(event.matches);
+    setIsDesktop(mediaQuery.matches);
+    mediaQuery.addEventListener('change', updateViewport);
+    return () => mediaQuery.removeEventListener('change', updateViewport);
+  }, []);
 
   const role = user?.role?.toLowerCase();
   const navItems = role === 'admin'
     ? [...BASE_NAV, ADMIN_NAV]
     : BASE_NAV;
 
-  const contentProps = { user, navItems, setOpen, navigate };
+  const contentProps = { user, navItems, setOpen, navigate, showNotifications: isDesktop };
 
   return (
     <>
@@ -190,7 +201,7 @@ export default function Sidebar() {
           </h2>
         </div>
         <div className="flex items-center gap-2">
-          {['admin', 'member'].includes(user?.role?.toLowerCase()) && <NotificationDropdown />}
+          {!isDesktop && ['admin', 'member'].includes(user?.role?.toLowerCase()) && <NotificationDropdown />}
           <button
             onClick={() => setOpen(true)}
             className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"

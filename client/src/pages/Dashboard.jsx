@@ -369,8 +369,11 @@ export default function Dashboard() {
   
   const [filter, setFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState('latest');
   const [currentPage, setCurrentPage] = useState(1);
+  const taskRequestRef = useRef(null);
+  const weeklyActivityRequestRef = useRef(null);
   const [totalPages, setTotalPages] = useState(cachedTotalPages || 1);
   const [stats, setStats] = useState(cachedStats || { total: 0, pending: 0, completed: 0, inProgress: 0 });
   const [showReminder, setShowReminder] = useState(false);
@@ -394,6 +397,11 @@ export default function Dashboard() {
   const [isEditAssignOpen, setIsEditAssignOpen] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
 
+  useEffect(() => {
+    const timeoutId = setTimeout(() => setDebouncedSearchQuery(searchQuery), 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
   const statusRef = useRef(null);
   const editStatusRef = useRef(null);
   const assignRef = useRef(null);
@@ -413,17 +421,23 @@ export default function Dashboard() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Reset page to 1 whenever filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filter, searchQuery, sortOrder]);
-
   // Fetch users for assignments (Only approved Members)
+  const usersFetchedRef = useRef(false);
+  const usersFetchRef = useRef(null);
   const fetchUsers = async () => {
-    try {
-      const res = await api.get('/user/assignable');
-      setUsersList(res.data);
-    } catch (err) { }
+    if (usersFetchedRef.current) return;
+    if (usersFetchRef.current) return usersFetchRef.current;
+
+    usersFetchRef.current = api.get('/user/assignable')
+      .then(res => {
+        setUsersList(res.data);
+        usersFetchedRef.current = true;
+      })
+      .catch(() => {})
+      .finally(() => {
+        usersFetchRef.current = null;
+      });
+    return usersFetchRef.current;
   };
 
   useEffect(() => {
@@ -494,27 +508,46 @@ export default function Dashboard() {
   }, [user?._id, user?.role]);
 
   // 1. Fetch Tasks from Backend
+  const previousTaskFiltersRef = useRef({ filter, searchQuery: debouncedSearchQuery, sortOrder });
   useEffect(() => {
-    fetchTasks();
-  }, [currentPage, filter, sortOrder, searchQuery]);
+    const previousFilters = previousTaskFiltersRef.current;
+    const filtersChanged = previousFilters.filter !== filter
+      || previousFilters.searchQuery !== debouncedSearchQuery
+      || previousFilters.sortOrder !== sortOrder;
+    previousTaskFiltersRef.current = { filter, searchQuery: debouncedSearchQuery, sortOrder };
 
-  const fetchTasks = async () => {
+    if (filtersChanged && currentPage !== 1) {
+      setCurrentPage(1);
+      return;
+    }
+    fetchTasks();
+  }, [currentPage, filter, sortOrder, debouncedSearchQuery]);
+
+  const fetchTasks = async (force = false) => {
     const userInfo = localStorage.getItem('userInfo');
     if (!userInfo) return;
     const { token } = JSON.parse(userInfo || '{}');
     if (!token) return;
 
+    const requestKey = JSON.stringify([currentPage, filter, sortOrder, debouncedSearchQuery]);
+    if (!force && taskRequestRef.current?.key === requestKey) {
+      return taskRequestRef.current.promise;
+    }
+    const request = api.get('/tasks', {
+      params: {
+        page: currentPage,
+        limit: 5,
+        search: debouncedSearchQuery,
+        status: filter,
+        sort: sortOrder
+      }
+    });
+    taskRequestRef.current = { key: requestKey, promise: request };
+
     try {
       console.log('[Dashboard] 📋 Fetching tasks...');
-      const res = await api.get('/tasks', {
-        params: {
-          page: currentPage,
-          limit: 5,
-          search: searchQuery,
-          status: filter,
-          sort: sortOrder
-        }
-      });
+      const res = await request;
+      if (taskRequestRef.current?.promise !== request) return;
       setTasks(res.data.tasks);
       setTotalPages(res.data.totalPages);
       setStats(res.data.stats);
@@ -551,19 +584,27 @@ export default function Dashboard() {
     } catch (error) {
       console.error("Failed to fetch tasks", error);
     } finally {
-      setLoadingTasks(false);
+      if (taskRequestRef.current?.promise === request) {
+        taskRequestRef.current = null;
+        setLoadingTasks(false);
+      }
     }
   };
 
-  const fetchWeeklyActivity = async () => {
+  const fetchWeeklyActivity = async (force = false) => {
     const userInfo = localStorage.getItem('userInfo');
     if (!userInfo) return;
     const { token } = JSON.parse(userInfo || '{}');
     if (!token) return;
 
+    if (!force && weeklyActivityRequestRef.current) return weeklyActivityRequestRef.current;
+    const request = api.get('/tasks/weekly-activity');
+    weeklyActivityRequestRef.current = request;
+
     try {
       console.log('[Dashboard] 📈 Fetching weekly activity...');
-      const res = await api.get('/tasks/weekly-activity');
+      const res = await request;
+      if (weeklyActivityRequestRef.current !== request) return;
       setWeeklyActivity(res.data);
       cachedWeeklyActivity = res.data;
       setChartError('');
@@ -571,7 +612,10 @@ export default function Dashboard() {
       console.error("Failed to fetch weekly activity:", err);
       setChartError("Failed to load task activity chart.");
     } finally {
-      setLoadingWeekly(false);
+      if (weeklyActivityRequestRef.current === request) {
+        weeklyActivityRequestRef.current = null;
+        setLoadingWeekly(false);
+      }
     }
   };
 
@@ -613,8 +657,8 @@ export default function Dashboard() {
     try {
       const res = await api.post('/tasks', payload);
       console.log('[handleAddTask] ✅ Task created:', res.data);
-      await fetchTasks();
-      await fetchWeeklyActivity();
+      await fetchTasks(true);
+      await fetchWeeklyActivity(true);
       setTitle('');
       setDescription('');
       setStatus('Pending');
@@ -644,8 +688,8 @@ export default function Dashboard() {
     
     try {
       await api.delete(`/tasks/${taskId}`);
-      await fetchTasks();
-      await fetchWeeklyActivity();
+      await fetchTasks(true);
+      await fetchWeeklyActivity(true);
     } catch (error) {
       alert("Failed to delete task.");
       console.error(error);
@@ -686,7 +730,7 @@ export default function Dashboard() {
 
       console.log('[handleUpdateTask] Sending payload:', payload);
       await api.put(`/tasks/${taskId}`, payload);
-      await fetchTasks();
+      await fetchTasks(true);
       setEditingTask(null);
     } catch (error) {
       const msg = error.response?.data?.message || error.message || 'Failed to update task';
@@ -773,7 +817,7 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => navigate('/tasks', { state: { focusCreateTask: true } })}
-              className="inline-flex min-h-10 w-auto shrink-0 items-center justify-center gap-1.5 rounded-md bg-emerald-700 px-2.5 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+              className="inline-flex min-h-10 w-auto shrink-0 items-center justify-center gap-1.5 rounded-md bg-emerald-600 px-2.5 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
             >
               <Plus className="h-3 w-3" aria-hidden="true" />
               <span>Create Task</span>

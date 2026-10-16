@@ -1,6 +1,42 @@
 const authService = require('../services/authService');
 const generateToken = require('../utils/generateToken');
 
+const notifyAdminsOfPendingUser = async (req, pendingUser) => {
+  const User = require('../models/User');
+  const Notification = require('../models/Notification');
+  const admins = await User.find({ role: { $in: ['admin', 'Admin'] } }).select('_id');
+  const io = req.app.get('io');
+  const message = `${pendingUser.name} has registered and is waiting for approval.`;
+
+  for (const admin of admins) {
+    const existing = await Notification.findOne({
+      user: admin._id,
+      sender: pendingUser._id,
+      type: 'registration'
+    });
+    if (existing) continue;
+
+    const notification = await Notification.create({
+      user: admin._id,
+      sender: pendingUser._id,
+      message,
+      type: 'registration',
+      isRead: false
+    });
+
+    if (io) {
+      io.emit(`notification_${admin._id}`, {
+        ...notification.toObject(),
+        sender: {
+          _id: pendingUser._id,
+          name: pendingUser.name,
+          profilePhotoUrl: pendingUser.profilePhotoUrl || ''
+        }
+      });
+    }
+  }
+};
+
 // @desc    Register a new user
 // @route   POST /api/auth/register
 // @access  Public
@@ -28,6 +64,14 @@ const registerUser = async (req, res) => {
     });
 
     if (user) {
+      if (user.role?.toLowerCase() === 'simpleuser') {
+        try {
+          await notifyAdminsOfPendingUser(req, user);
+        } catch (notificationError) {
+          console.error('Failed to create registration notifications:', notificationError.message);
+        }
+      }
+
       res.status(201).json({
         message: 'User registered successfully',
       });
@@ -61,45 +105,11 @@ const loginUser = async (req, res) => {
       // Backward compatibility: If user is Pending, they are now simpleUser
       const effectiveRole = user.role?.toLowerCase() === 'pending' ? 'simpleUser' : user.role;
 
-      // Send notification to admins if user has simpleUser role (Pending Approval) on their login
       if (effectiveRole?.toLowerCase() === 'simpleuser') {
         try {
-          const User = require('../models/User');
-          const Notification = require('../models/Notification');
-          const message = `${user.name} has registered and is waiting for approval.`;
-          
-          const existingNotif = await Notification.findOne({
-            message,
-            type: 'registration'
-          });
-
-          if (!existingNotif) {
-            const admins = await User.find({ role: { $in: ['admin', 'Admin'] } });
-            const io = req.app.get('io');
-
-            for (const admin of admins) {
-              const notif = await Notification.create({
-                user: admin._id,
-                sender: user._id,
-                message,
-                type: 'registration',
-                isRead: false
-              });
-
-              if (io) {
-                io.emit(`notification_${admin._id}`, {
-                  ...notif.toObject(),
-                  sender: {
-                    _id: user._id,
-                    name: user.name,
-                    profilePhotoUrl: user.profilePhotoUrl || ''
-                  }
-                });
-              }
-            }
-          }
+          await notifyAdminsOfPendingUser(req, user);
         } catch (notifError) {
-          console.error("Failed to create login notification:", notifError);
+          console.error('Failed to create login notifications:', notifError.message);
         }
       }
 

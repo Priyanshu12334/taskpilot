@@ -2,6 +2,7 @@ const express = require('express');
 const { 
   updateProfile, 
   updatePassword, 
+  uploadProfilePhoto,
   getAllUsers, 
   getAssignableUsers, 
   updateUserRole, 
@@ -14,12 +15,14 @@ const {
 } = require('../controllers/userController');
 const { protect, admin } = require('../middleware/authMiddleware');
 const { passwordLimiter, contactLimiter } = require('../middleware/rateLimiter');
+const { uploadProfilePhotoFile, handleProfilePhotoUploadError } = require('../middleware/profilePhotoUpload');
 
 const router = express.Router();
 
 // Both routes are strictly protected by JWT verification
 router.put('/update', protect, updateProfile);
 router.put('/password', protect, passwordLimiter, updatePassword);
+router.post('/profile-photo', protect, uploadProfilePhotoFile, handleProfilePhotoUploadError, uploadProfilePhoto);
 router.get('/all', protect, getAllUsers);
 router.get('/assignable', protect, getAssignableUsers);
 router.post('/contact', protect, contactLimiter, submitContactMessage);

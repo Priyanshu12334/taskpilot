@@ -632,10 +632,12 @@ export default function AdminUsers() {
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-3">
                                 <div className={clsx(
-                                  'w-11 h-11 rounded-[14px] flex items-center justify-center font-bold text-base shrink-0 border-2 transition-transform group-hover:scale-105',
+                                  'relative w-11 h-11 rounded-[14px] flex items-center justify-center font-bold text-base shrink-0 border-2 transition-transform group-hover:scale-105 overflow-hidden',
                                   getRoleDetails(u.role).avatarClass
                                 )}>
-                                  {u.name?.charAt(0).toUpperCase()}
+                                  {(u._id === user?._id ? user?.profilePhotoUrl : u.profilePhotoUrl)
+                                    ? <img src={u._id === user?._id ? user.profilePhotoUrl : u.profilePhotoUrl} alt={`${u.name}'s profile`} className="h-full w-full object-cover" />
+                                    : u.name?.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-2">
@@ -706,10 +708,12 @@ export default function AdminUsers() {
                     >
                       <div className="flex items-center gap-3">
                         <div className={clsx(
-                          'w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg shrink-0 border-2',
+                          'relative w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg shrink-0 border-2 overflow-hidden',
                           getRoleDetails(u.role).avatarClass
                         )}>
-                          {u.name?.charAt(0).toUpperCase()}
+                          {(u._id === user?._id ? user?.profilePhotoUrl : u.profilePhotoUrl)
+                            ? <img src={u._id === user?._id ? user.profilePhotoUrl : u.profilePhotoUrl} alt={`${u.name}'s profile`} className="h-full w-full object-cover" />
+                            : u.name?.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap mb-1">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import UserAvatar from '../components/UserAvatar';
 import { useAuth } from '../context/AuthContext';
 import { 
   HelpCircle, Wrench, Lightbulb, UserCheck, Mail, Globe, 
@@ -70,6 +71,34 @@ export default function ContactUs() {
       socket.off('newContactMessage');
     };
   }, [isAdmin, currentPage, adminFilter, statusFilter, searchQuery]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    const handleProfilePhotoUpdated = ({ userId, name, profilePhotoUrl }) => {
+      if (!userId) return;
+      const updatedUserId = userId.toString();
+      const updateSender = (message) => {
+        const senderId = message.sender?._id?.toString();
+        if (senderId !== updatedUserId) return message;
+        return {
+          ...message,
+          profilePhotoUrl: profilePhotoUrl || '',
+          sender: {
+            ...message.sender,
+            name: name || message.sender.name,
+            profilePhotoUrl: profilePhotoUrl || ''
+          }
+        };
+      };
+
+      setAdminMessages(current => current.map(updateSender));
+      setSelectedMessage(current => current ? updateSender(current) : current);
+    };
+
+    socket.on('profilePhotoUpdated', handleProfilePhotoUpdated);
+    return () => socket.off('profilePhotoUpdated', handleProfilePhotoUpdated);
+  }, [isAdmin]);
 
   // Check if navigated from notification with a pre-selected message ID
   useEffect(() => {
@@ -481,6 +510,15 @@ export default function ContactUs() {
                           {isUnread && (
                             <span className="w-2 h-2 rounded-full bg-sky-400 shadow-sm shrink-0"></span>
                           )}
+
+                          <UserAvatar
+                            user={{
+                              name: msg.sender?.name || msg.name,
+                              profilePhotoUrl: msg.sender?.profilePhotoUrl || msg.profilePhotoUrl,
+                              role: msg.sender?.role || msg.role
+                            }}
+                            size="sm"
+                          />
 
                           <span className={clsx("font-bold text-sm truncate", isUnread ? "text-white" : "text-slate-200")}>
                             {msg.name}

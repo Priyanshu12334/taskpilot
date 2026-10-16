@@ -4,6 +4,8 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const dotenv = require('dotenv');
+dotenv.config();
+
 const connectDB = require('./config/db');
 const { connectRedis } = require('./config/redis');
 const authRoutes = require('./routes/authRoutes');
@@ -11,8 +13,7 @@ const taskRoutes = require('./routes/taskRoutes');
 const userRoutes = require('./routes/userRoutes');
 const { apiLimiter } = require('./middleware/rateLimiter');
 const Message = require('./models/Message');
-
-dotenv.config();
+const User = require('./models/User');
 
 // Connect to the database
 connectDB();
@@ -47,12 +48,15 @@ io.on('connection', (socket) => {
         name: data.name || 'Anonymous',
         text: data.text
       });
+      const sender = await User.findById(newMessage.user).select('profilePhotoUrl role');
 
       // Broadcast the strictly saved object ensuring timestamp accuracy
       io.emit('receiveMessage', {
         _id: newMessage._id,
         user: newMessage.user,
         name: newMessage.name,
+        profilePhotoUrl: sender?.profilePhotoUrl || '',
+        role: sender?.role || '',
         text: newMessage.text,
         timestamp: newMessage.createdAt
       });
@@ -115,8 +119,16 @@ app.use('/api/chat', require('./routes/chatRoutes'));
 app.get('/api/messages', async (req, res) => {
   try {
     // Limits payload conservatively
-    const messages = await Message.find().sort({ createdAt: 1 }).limit(100);
-    res.status(200).json(messages);
+    const messages = await Message.find().populate('user', 'profilePhotoUrl role').sort({ createdAt: 1 }).limit(100);
+    res.status(200).json(messages.map((message) => ({
+      _id: message._id,
+      user: message.user?._id || message.user,
+      name: message.name,
+      profilePhotoUrl: message.user?.profilePhotoUrl || '',
+      role: message.user?.role || '',
+      text: message.text,
+      createdAt: message.createdAt,
+    })));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -41,6 +41,14 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  profilePhotoUrl: {
+    type: String,
+    default: '',
+  },
+  profilePhotoPublicId: {
+    type: String,
+    default: '',
+  },
   clearedNotifications: [{
     type: String,
   }],

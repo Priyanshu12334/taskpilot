@@ -17,14 +17,14 @@ const updateUserPassword = async (user, newPassword) => {
 };
 
 const getAllUsers = async () => {
-  return await User.find().select('name email role canAccessChat purpose status');
+  return await User.find().select('name email role canAccessChat purpose status profilePhotoUrl');
 };
 
 const getAssignableUsers = async () => {
   return await User.find({
     role: { $in: ['member', 'Member'] },
     status: { $ne: 'blocked' }
-  }).select('name email role canAccessChat purpose status');
+  }).select('name email role canAccessChat purpose status profilePhotoUrl');
 };
 
 const updateUserRole = async (userId, role) => {
@@ -71,7 +71,7 @@ const getContactMessages = async (filter = {}, page = 1, limit = 10, search = ''
   const unreadCount = await ContactMessage.countDocuments({ isRead: false });
 
   const messages = await ContactMessage.find(matchQuery)
-    .populate('sender', 'name email role')
+    .populate('sender', 'name email role profilePhotoUrl')
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
@@ -91,7 +91,7 @@ const markContactMessageRead = async (messageId) => {
     messageId,
     { $set: { isRead: true } },
     { new: true }
-  ).populate('sender', 'name email role');
+  ).populate('sender', 'name email role profilePhotoUrl');
 };
 
 const markContactMessageResolved = async (messageId, status = 'resolved') => {
@@ -100,7 +100,7 @@ const markContactMessageResolved = async (messageId, status = 'resolved') => {
     messageId,
     { $set: { status } },
     { new: true }
-  ).populate('sender', 'name email role');
+  ).populate('sender', 'name email role profilePhotoUrl');
 };
 
 const deleteContactMessage = async (messageId) => {

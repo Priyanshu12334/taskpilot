@@ -1,4 +1,112 @@
 const userService = require('../services/userService');
+const User = require('../models/User');
+const cloudinary = require('../config/cloudinary');
+
+const hasValidImageSignature = (file) => {
+  const bytes = file.buffer;
+  const mimeType = file.mimetype;
+  if (mimeType === 'image/jpeg') return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  if (mimeType === 'image/png') return bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+  if (mimeType === 'image/webp') return bytes.toString('ascii', 0, 4) === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WEBP';
+  return false;
+};
+
+const uploadToCloudinary = (buffer) => new Promise((resolve, reject) => {
+  const stream = cloudinary.uploader.upload_stream({
+    folder: 'taskpilot/profile-photos',
+    resource_type: 'image',
+    allowed_formats: ['jpg', 'png', 'webp'],
+    timeout: 30000,
+  }, (error, result) => error ? reject(error) : resolve(result));
+  stream.end(buffer);
+});
+
+const deleteCloudinaryPhoto = async (publicId) => {
+  if (!publicId) return;
+  try {
+    await cloudinary.uploader.destroy(publicId, { resource_type: 'image', invalidate: true });
+  } catch (error) {
+    console.error('[profile-photo] Previous Cloudinary image cleanup failed:', error.message);
+  }
+};
+
+// @desc    Upload or replace the authenticated user's profile photo
+// @route   POST /api/user/profile-photo
+// @access  Private
+const uploadProfilePhoto = async (req, res) => {
+  if (!req.file) return res.status(400).json({ message: 'Choose an image to upload.' });
+  if (!hasValidImageSignature(req.file)) {
+    return res.status(400).json({ message: 'Upload a valid JPEG, PNG, or WebP image.' });
+  }
+
+  let uploadedPhoto;
+  let operationStage = 'load_user';
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+
+    operationStage = 'cloudinary_upload';
+    uploadedPhoto = await uploadToCloudinary(req.file.buffer);
+    if (!uploadedPhoto?.secure_url || !uploadedPhoto?.public_id) {
+      throw new Error('Cloudinary returned an incomplete upload result.');
+    }
+    operationStage = 'mongodb_update';
+    const previousPublicId = user.profilePhotoPublicId;
+    user.profilePhotoUrl = uploadedPhoto.secure_url;
+    user.profilePhotoPublicId = uploadedPhoto.public_id;
+    await user.save();
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('profilePhotoUpdated', {
+        userId: user._id.toString(),
+        name: user.name,
+        profilePhotoUrl: user.profilePhotoUrl,
+      });
+    }
+
+    if (previousPublicId && previousPublicId !== uploadedPhoto.public_id) {
+      await deleteCloudinaryPhoto(previousPublicId);
+    }
+
+    return res.status(200).json({
+      profilePhotoUrl: user.profilePhotoUrl,
+    });
+  } catch (error) {
+    if (uploadedPhoto?.public_id) await deleteCloudinaryPhoto(uploadedPhoto.public_id);
+    const providerError = error?.error || error;
+    const providerStatus = Number(providerError.http_code || error.http_code) || null;
+    const configuredSecrets = [
+      process.env.CLOUDINARY_API_KEY,
+      process.env.CLOUDINARY_API_SECRET,
+    ].filter(Boolean);
+    const providerMessage = String(providerError.message || error.message || 'Unknown error');
+    const safeProviderMessage = configuredSecrets.reduce(
+      (message, secret) => message.split(secret).join('[redacted]'),
+      providerMessage
+    );
+
+    console.error('[profile-photo] Operation failed:', {
+      stage: operationStage,
+      provider: operationStage === 'cloudinary_upload' ? 'cloudinary' : undefined,
+      http_code: providerStatus,
+      code: providerError.code || undefined,
+      message: safeProviderMessage,
+      errorName: providerError.name || error.name || 'Error',
+    });
+
+    if (operationStage === 'cloudinary_upload') {
+      const responseStatus = providerStatus === 403 ? 403 : 502;
+      return res.status(responseStatus).json({
+        message: `Cloudinary upload failed: ${safeProviderMessage}`,
+        http_code: providerStatus,
+        code: providerError.code || undefined,
+        errorName: providerError.name || error.name || 'Error',
+      });
+    }
+    return res.status(500).json({ message: 'The profile photo could not be saved. Please try again.' });
+  }
+};
 
 
 // @desc    Update User Name and Email
@@ -176,6 +284,7 @@ const submitContactMessage = async (req, res) => {
 
       const notif = await Notification.create({
         user: adminUser._id,
+        sender: req.user._id,
         message: notifMessage,
         type: 'contact',
         isRead: false,
@@ -183,7 +292,14 @@ const submitContactMessage = async (req, res) => {
       });
 
       if (io) {
-        io.emit(`notification_${adminUser._id}`, notif);
+        io.emit(`notification_${adminUser._id}`, {
+          ...notif.toObject(),
+          sender: {
+            _id: req.user._id,
+            name: req.user.name,
+            profilePhotoUrl: req.user.profilePhotoUrl || ''
+          }
+        });
       }
     }
 
@@ -296,6 +412,7 @@ const updateUserChatAccess = async (req, res) => {
 };
 
 module.exports = { 
+  uploadProfilePhoto,
   updateProfile, 
   updatePassword, 
   getAllUsers, 

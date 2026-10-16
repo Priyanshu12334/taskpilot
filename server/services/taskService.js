@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const createTask = async (taskData) => {
   const task = await Task.create(taskData);
   // Populate assignedTo so frontend card shows user name immediately
-  return await Task.findById(task._id).populate('assignedTo', 'name email');
+  return await Task.findById(task._id).populate('assignedTo', 'name email profilePhotoUrl');
 };
 
 const countTasks = async (query) => {
@@ -13,7 +13,7 @@ const countTasks = async (query) => {
 
 const getTasks = async (query, sortOption, skip, limit) => {
   return await Task.find(query)
-    .populate('assignedTo', 'name email')
+    .populate('assignedTo', 'name email profilePhotoUrl')
     .sort(sortOption)
     .skip(skip)
     .limit(limit);
@@ -57,7 +57,7 @@ const getTaskStats = async (matchQuery) => {
 };
 
 const findTaskById = async (id) => {
-  return await Task.findById(id).populate('assignedTo', 'name email');
+  return await Task.findById(id).populate('assignedTo', 'name email profilePhotoUrl');
 };
 
 const updateTask = async (task) => {

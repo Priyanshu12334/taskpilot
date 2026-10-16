@@ -2,7 +2,18 @@
 
 TaskPilot is a full-stack application for team collaboration and task management. Admin can create tasks, assign them to team members, track progress, and communicate through real-time team chat.
 
+## Landing Page
 ![TaskPilot Landing Page](screenshots/landing-page.png)
+
+## Admin Dashboard
+![TaskPilot Admin Page](screenshots/Admin.png)
+
+## Member Dashboard
+![TaskPilot Member Page](screenshots/Member.png)
+
+## Pending User Dashboard
+![TaskPilot Pending-user Page](screenshots/Pending-user.png)
+
 
 ## Features
 

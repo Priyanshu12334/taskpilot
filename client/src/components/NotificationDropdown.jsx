@@ -7,6 +7,7 @@ import clsx from 'clsx';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { useNavigate } from 'react-router-dom';
+import UserAvatar from './UserAvatar';
 dayjs.extend(relativeTime);
 
 export default function NotificationDropdown() {
@@ -210,6 +211,11 @@ export default function NotificationDropdown() {
                       : !notif.isRead);
 
                 const isClickable = notif.type === 'registration' || notif.type === 'contact';
+                const avatarUser = notif.type === 'registration'
+                  ? notif.sender || { name: notif.message?.split(' has registered')[0] }
+                  : notif.type === 'contact'
+                    ? notif.sender || notif.contactMessageId?.sender || { name: notif.message?.split(' from ').pop() }
+                    : null;
 
                 return (
                   <div 
@@ -221,9 +227,11 @@ export default function NotificationDropdown() {
                   >
                     <div className="flex justify-between items-start gap-3">
                       <div 
-                        className={clsx("flex-1 min-w-0", isClickable && "cursor-pointer")}
+                        className={clsx("flex min-w-0 flex-1 items-start gap-2.5", isClickable && "cursor-pointer")}
                         onClick={() => isClickable && handleNotificationClick(notif)}
                       >
+                        {avatarUser && <UserAvatar user={avatarUser} size="sm" />}
+                        <div className="min-w-0 flex-1">
                         {notif.type === 'registration' && (
                           <div className="flex items-center gap-1.5 mb-1">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">
@@ -263,6 +271,7 @@ export default function NotificationDropdown() {
                         <span className="text-[10px] text-slate-500 mt-1 block">
                           {dayjs(notif.createdAt).fromNow()}
                         </span>
+                        </div>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         {notif.type !== 'completion' && isUnread && (

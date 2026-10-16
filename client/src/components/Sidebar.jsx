@@ -3,9 +3,8 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, ListTodo, MessageSquare, Settings, Users,
-  LogOut, Loader2, X, Menu, Lock, HelpCircle
+  X, Menu, Lock, HelpCircle
 } from 'lucide-react';
-import api from '../services/api';
 import clsx from 'clsx';
 import NotificationDropdown from './NotificationDropdown';
 import { getRoleDetails, isApprovalPending } from '../utils/roleUtils';
@@ -78,7 +77,7 @@ function SidebarItem({ path, icon: Icon, label, onClick, onLockedClick, disabled
 }
 
 // ─── Main Sidebar ────────────────────────────────────────
-const SidebarContent = ({ user, navItems, setOpen, handleLogout, isLoggingOut }) => (
+const SidebarContent = ({ user, navItems, setOpen, navigate }) => (
   <div className="flex flex-col h-full">
     {/* Header / Logo */}
     <div className="flex items-center justify-between mb-7 px-2">
@@ -114,7 +113,7 @@ const SidebarContent = ({ user, navItems, setOpen, handleLogout, isLoggingOut })
     {/* Nav Section */}
     <div className="flex-1 overflow-y-auto no-scrollbar space-y-6">
       <div>
-        <p className="px-4 text-[10px] font-bold text-slate-200 uppercase tracking-[0.2em] mb-3">Main Menu</p>
+        <div className="h-[15px] mb-3" aria-hidden="true" />
         <ul className="space-y-0.5">
           {navItems.map(item => {
             const isSimpleUser = isApprovalPending(user);
@@ -138,57 +137,45 @@ const SidebarContent = ({ user, navItems, setOpen, handleLogout, isLoggingOut })
 
     {/* Footer / User Profile */}
     <div className="mt-auto pt-4 border-t border-slate-800 space-y-3">
-      <div className="flex items-center gap-2.5 p-1.5 rounded-2xl bg-slate-800 border-none group hover:bg-white/5 transition-colors duration-200">
+      <button
+        type="button"
+        onClick={() => { setOpen(false); navigate('/settings'); }}
+        aria-label="Open profile settings"
+        className="flex w-full items-center gap-2.5 p-1.5 rounded-2xl bg-slate-800 border-none group text-left transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/70"
+      >
         <div className="relative">
           <div className={clsx(
-            'w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shadow-inner',
+            'w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shadow-inner overflow-hidden',
             getRoleDetails(user?.role).sidebarAvatarClass
           )}>
-            {user?.name?.charAt(0).toUpperCase()}
+            {user?.profilePhotoUrl
+              ? <img src={user.profilePhotoUrl} alt="Profile" className="h-full w-full object-cover" />
+              : user?.name?.charAt(0).toUpperCase()}
           </div>
         </div>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 rounded-lg px-2 py-1 -ml-2 transition-colors duration-200 group-hover:bg-slate-700/30">
           <p className="text-sm font-bold truncate text-white tracking-wide">{user?.name}</p>
           <p className={clsx("text-[10px] font-bold uppercase tracking-wider", getRoleDetails(user?.role).textClass)}>
             {getRoleDetails(user?.role).displayLabel}
           </p>
         </div>
-      </div>
-
-      <button
-        onClick={handleLogout}
-        disabled={isLoggingOut}
-        className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-slate-500 text-sm font-bold hover:bg-slate-500/10 hover:text-slate-400 transition-all active:scale-[0.98] disabled:opacity-50 group"
-      >
-        {isLoggingOut
-          ? <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
-          : <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-        }
-        {isLoggingOut ? 'Logging out...' : 'Log Out'}
       </button>
+
     </div>
   </div>
 );
 
 export default function Sidebar() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-
-  const handleLogout = async () => {
-    if (!window.confirm('Are you sure you want to log out?')) return;
-    setIsLoggingOut(true);
-    try { await api.post('/auth/logout'); } catch {}
-    finally { setTimeout(() => { logout(); navigate('/login', { replace: true }); }, 600); }
-  };
 
   const role = user?.role?.toLowerCase();
   const navItems = role === 'admin'
     ? [...BASE_NAV, ADMIN_NAV]
     : BASE_NAV;
 
-  const contentProps = { user, navItems, setOpen, handleLogout, isLoggingOut };
+  const contentProps = { user, navItems, setOpen, navigate };
 
   return (
     <>

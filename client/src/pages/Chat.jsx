@@ -6,6 +6,7 @@ import { socket } from '../socket';
 import api from '../services/api';
 import clsx from 'clsx';
 import Sidebar from '../components/Sidebar';
+import UserAvatar from '../components/UserAvatar';
 
 // Shared socket instance imported above
 
@@ -55,8 +56,10 @@ export default function Chat() {
         const res = await api.get('/messages');
         const history = res.data.map(m => ({
           _id: m._id,
-          user: m.user,
+          user: m.user?._id || m.user,
           name: m.name,
+          profilePhotoUrl: m.profilePhotoUrl || '',
+          role: m.role || '',
           text: m.text,
           timestamp: m.createdAt
         }));
@@ -186,7 +189,7 @@ export default function Chat() {
         </header>
 
         {/* Chat Area */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-4 no-scrollbar min-h-0">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 no-scrollbar min-h-0">
           {loadingMessages ? (
             <div className="space-y-4">
               <ChatMessageSkeleton isSelf={false} />
@@ -210,50 +213,48 @@ export default function Chat() {
                 <div
                   key={idx}
                   className={clsx(
-                    'flex flex-col max-w-[80%] sm:max-w-[75%] group',
-                    isSelf ? 'ml-auto items-end' : 'mr-auto items-start'
+                    'flex max-w-[88%] sm:max-w-[75%] items-end gap-2 group',
+                    isSelf ? 'ml-auto flex-row-reverse' : 'mr-auto'
                   )}
                 >
-                  {/* Sender name — only for received messages */}
                   {!isSelf && (
-                    <span className="text-[12px] font-semibold text-slate-200 mb-1 px-1">
-                      {msg.name}
-                    </span>
+                    <UserAvatar user={{ name: msg.name, profilePhotoUrl: msg.profilePhotoUrl, role: msg.role }} size="xs" />
                   )}
 
-                  {/* Bubble */}
-                  <div className={clsx(
-                    'relative group/bubble rounded-2xl px-3 py-2 text-sm break-words shadow-sm',
-                    isSelf
-                      ? 'bg-green-700 text-white rounded-br-none'
-                      : 'bg-violet-900 text-slate-100 border border-slate-700/50 rounded-bl-none'
-                  )}>
-                    {/* Message text + timestamp row */}
-                    <div className="flex flex-col gap-1 font-sans">
-                      {/* Message text — with right padding on sent msgs to clear delete button */}
-                      <p className={clsx('leading-snug', isSelf && 'pr-7')}>
+                  <div className="flex min-w-0 flex-col">
+                    {!isSelf && (
+                      <span className="mb-0.5 px-1 text-[11px] font-semibold leading-tight text-slate-200">
+                        {msg.name}
+                      </span>
+                    )}
+
+                    <div className={clsx(
+                      'relative group/bubble w-fit max-w-full rounded-2xl px-3 py-1.5 text-sm break-words shadow-sm',
+                      isSelf
+                        ? 'bg-green-700 text-white rounded-br-none'
+                        : 'bg-blue-900 text-slate-100 border border-slate-700/50 rounded-bl-none'
+                    )}>
+                      <p className={clsx('whitespace-pre-wrap leading-snug', isSelf && 'pr-6')}>
                         {msg.text}
                       </p>
 
-                      {/* Timestamp — inside bubble, bottom-right */}
                       <span className={clsx(
-                        'text-[10px] leading-none self-end',
+                        'mt-1 block text-right text-[10px] leading-none',
                         isSelf ? 'text-slate-200' : 'text-slate-400'
                       )}>
                         {timeStr}
                       </span>
-                    </div>
 
-                    {/* Delete button — own messages only, appears on hover */}
-                    {isSelf && (
-                      <button
-                        onClick={() => socket.emit('deleteMessage', { messageId: msg._id, userId: user._id })}
-                        className="absolute top-2 right-2 p-1 text-white/50 hover:text-red-400 hover:bg-black/20 rounded-full opacity-100 sm:opacity-0 sm:group-hover/bubble:opacity-100 transition-all duration-150"
-                        title="Delete message"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+                      {isSelf && (
+                        <button
+                          onClick={() => socket.emit('deleteMessage', { messageId: msg._id, userId: user._id })}
+                          className="absolute top-1.5 right-1 p-1 text-white/50 hover:text-red-400 hover:bg-black/20 rounded-full opacity-100 sm:opacity-0 sm:group-hover/bubble:opacity-100 transition-all duration-150"
+                          title="Delete message"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );

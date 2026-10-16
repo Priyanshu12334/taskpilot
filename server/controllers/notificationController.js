@@ -33,13 +33,35 @@ const getNotifications = async (req, res) => {
       ]);
       
       // Fetch stored registration & contact notifications for admin
+      const User = require('../models/User');
       const registrationNotifications = await Notification.find({
         user: req.user._id,
         type: { $in: ['registration', 'contact'] }
-      }).lean();
+      })
+        .populate('sender', 'name profilePhotoUrl')
+        .populate({
+          path: 'contactMessageId',
+          populate: { path: 'sender', select: 'name profilePhotoUrl' }
+        })
+        .lean();
+
+      const legacyRegistrationNames = [...new Set(registrationNotifications
+        .filter(notification => notification.type === 'registration' && !notification.sender)
+        .map(notification => notification.message.match(/^(.*?) has registered and is waiting for approval\.$/)?.[1])
+        .filter(Boolean))];
+      if (legacyRegistrationNames.length) {
+        const legacyUsers = await User.find({ name: { $in: legacyRegistrationNames } })
+          .select('name profilePhotoUrl')
+          .lean();
+        const usersByName = new Map(legacyUsers.map(legacyUser => [legacyUser.name, legacyUser]));
+        registrationNotifications.forEach(notification => {
+          if (notification.type !== 'registration' || notification.sender) return;
+          const name = notification.message.match(/^(.*?) has registered and is waiting for approval\.$/)?.[1];
+          notification.sender = usersByName.get(name) || (name ? { name, profilePhotoUrl: '' } : null);
+        });
+      }
 
       // Get cleared notifications list for user
-      const User = require('../models/User');
       const adminUserDoc = await User.findById(req.user._id).select('clearedNotifications');
       const clearedSet = new Set((adminUserDoc?.clearedNotifications || []).map(id => id.toString()));
 
@@ -55,7 +77,7 @@ const getNotifications = async (req, res) => {
 
     // Default behavior for Members: Use existing Notification model
     const notifications = await Notification.find({ user: req.user._id })
-      .populate('sender', 'name role email')
+      .populate('sender', 'name role email profilePhotoUrl')
       .sort({ createdAt: -1 })
       .limit(50);
     res.status(200).json(notifications);

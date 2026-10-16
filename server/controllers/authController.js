@@ -80,13 +80,21 @@ const loginUser = async (req, res) => {
             for (const admin of admins) {
               const notif = await Notification.create({
                 user: admin._id,
+                sender: user._id,
                 message,
                 type: 'registration',
                 isRead: false
               });
 
               if (io) {
-                io.emit(`notification_${admin._id}`, notif);
+                io.emit(`notification_${admin._id}`, {
+                  ...notif.toObject(),
+                  sender: {
+                    _id: user._id,
+                    name: user.name,
+                    profilePhotoUrl: user.profilePhotoUrl || ''
+                  }
+                });
               }
             }
           }
@@ -102,6 +110,7 @@ const loginUser = async (req, res) => {
         role: effectiveRole,
         status: user.status,
         canAccessChat: user.canAccessChat,
+        profilePhotoUrl: user.profilePhotoUrl,
         token: generateToken(user._id),
       });
     } else {
@@ -127,6 +136,7 @@ const getUserProfile = async (req, res) => {
         role: user.role,
         status: user.status,
         canAccessChat: user.canAccessChat,
+        profilePhotoUrl: user.profilePhotoUrl,
       });
     } else {
       res.status(404).json({ message: 'User not found' });

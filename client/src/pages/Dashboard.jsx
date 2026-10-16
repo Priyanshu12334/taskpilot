@@ -6,6 +6,7 @@ import api from '../services/api';
 import { socket } from '../socket';
 import clsx from 'clsx';
 import Sidebar from '../components/Sidebar';
+import UserAvatar from '../components/UserAvatar';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import Loader from '../components/Loader';
@@ -275,6 +276,18 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const isTasksPage = location.pathname === '/tasks';
+  const createTaskFormRef = useRef(null);
+
+  useEffect(() => {
+    if (!isTasksPage || !location.state?.focusCreateTask) return;
+
+    const frame = requestAnimationFrame(() => {
+      createTaskFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      navigate(location.pathname, { replace: true, state: null });
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [isTasksPage, location.pathname, location.state, navigate]);
 
   // 🛡️ Loading Guard: Ensure user data is available before rendering any dependent logic
   if (!user) return <Loader message="Initializing Dashboard..." />;
@@ -415,6 +428,41 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    const handleProfilePhotoUpdated = ({ userId, name, profilePhotoUrl }) => {
+      if (!userId) return;
+      const updatedUserId = userId.toString();
+      const updateAssignedUser = (task) => {
+        const assignedId = task.assignedTo?._id?.toString()
+          || (typeof task.assignedTo === 'string' ? task.assignedTo : '');
+        if (assignedId !== updatedUserId) return task;
+
+        const currentAssignee = typeof task.assignedTo === 'object' ? task.assignedTo : {};
+        return {
+          ...task,
+          assignedTo: {
+            ...currentAssignee,
+            _id: updatedUserId,
+            name: name || currentAssignee.name,
+            profilePhotoUrl: profilePhotoUrl || '',
+          },
+        };
+      };
+
+      setUsersList(current => current.map(assignedUser => (
+        assignedUser._id.toString() === updatedUserId
+          ? { ...assignedUser, profilePhotoUrl: profilePhotoUrl || '' }
+          : assignedUser
+      )));
+      cachedTasks = cachedTasks?.map(updateAssignedUser) || cachedTasks;
+      setTasks(current => current.map(updateAssignedUser));
+    };
+
+    socket.on('profilePhotoUpdated', handleProfilePhotoUpdated);
+    socket.connect();
+    return () => socket.off('profilePhotoUpdated', handleProfilePhotoUpdated);
   }, []);
 
   // Listen for completion alerts (Admin only)
@@ -712,8 +760,8 @@ export default function Dashboard() {
 
       {/* Main Content Area */}
       <main className={clsx("flex-1 sm:overflow-y-auto no-scrollbar min-h-screen sm:h-full pt-40 p-5 relative z-10", isTasksPage ? "sm:pt-8 sm:px-8 lg:px-10" : "sm:pt-10 sm:p-14")}>
-        <header className={clsx("flex items-center justify-between", isTasksPage ? "mb-6" : "mb-10")}>
-          <div>
+        <header className={clsx("flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between", isTasksPage ? "mb-6" : "mb-10")}>
+          <div className="min-w-0">
             <h1 className="text-2xl font-bold text-white mb-2">{isTasksPage ? 'Your Tasks' : <>Hi, <span className="text-emerald-500">{user?.name || 'User'}</span></>}</h1>
             <p className="text-slate-400 text-sm font-medium">
               {isTasksPage ? 'Manage tasks, track progress, and keep your team in sync.' : user?.role?.toLowerCase() === 'simpleuser'
@@ -721,6 +769,16 @@ export default function Dashboard() {
                 : 'Here are your active tasks for today.'}
             </p>
           </div>
+          {!isTasksPage && user?.role?.toLowerCase() === 'admin' && (
+            <button
+              type="button"
+              onClick={() => navigate('/tasks', { state: { focusCreateTask: true } })}
+              className="inline-flex min-h-10 w-auto shrink-0 items-center justify-center gap-1.5 rounded-md bg-emerald-700 px-2.5 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+            >
+              <Plus className="h-3 w-3" aria-hidden="true" />
+              <span>Create Task</span>
+            </button>
+          )}
         </header>
 
         {/* Top Completion Alert (Admin Only) */}
@@ -973,7 +1031,7 @@ export default function Dashboard() {
         {isTasksPage && <div>
           {/* Add Task Form Section */}
           {user?.role?.toLowerCase() === 'admin' && (
-          <div className="bg-slate-900/80 border border-slate-700/40 rounded-2xl p-4 sm:p-5 shadow-lg mb-5">
+          <div id="create-task-form" ref={createTaskFormRef} className="scroll-mt-6 bg-slate-900/80 border border-slate-700/40 rounded-2xl p-4 sm:p-5 shadow-lg mb-5">
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <Plus className="w-5 h-5 text-emerald-400" /> Create Task
             </h2>
@@ -1082,7 +1140,10 @@ export default function Dashboard() {
                     }}
                     className="w-full flex items-center justify-between bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-200 outline-none h-11 lg:min-h-[80px] transition-colors"
                   >
-                    <span className="truncate">{usersList.find(u => u._id === assignedTo)?.name || "Unassigned"}</span>
+                    <span className="flex min-w-0 items-center gap-2">
+                      {assignedTo && <UserAvatar user={usersList.find(u => u._id === assignedTo)} />}
+                      <span className="truncate">{usersList.find(u => u._id === assignedTo)?.name || "Unassigned"}</span>
+                    </span>
                     <User className={clsx("w-4 h-4 transition-transform", isAssignOpen && "scale-110")} />
                   </button>
                   
@@ -1110,11 +1171,12 @@ export default function Dashboard() {
                               type="button"
                               onClick={() => { setAssignedTo(u._id); setIsAssignOpen(false); }}
                               className={clsx(
-                                "w-full text-left px-4 py-2.5 text-sm font-medium transition-colors border-b border-slate-700/50 last:border-0 hover:bg-sky-600 hover:text-white",
+                                "flex w-full items-center gap-2.5 text-left px-4 py-2.5 text-sm font-medium transition-colors border-b border-slate-700/50 last:border-0 hover:bg-sky-600 hover:text-white",
                                 assignedTo === u._id ? "bg-slate-700 text-white" : "text-slate-300"
                               )}
                             >
-                              {u.name}
+                              <UserAvatar user={u} />
+                              <span className="truncate">{u.name}</span>
                             </button>
                           ))
                         )}
@@ -1262,6 +1324,9 @@ export default function Dashboard() {
               ) : (
                 <div className="space-y-3">
                   {displayTasks.map(task => {
+                    const taskAssigneeId = task.assignedTo?._id?.toString()
+                      || (typeof task.assignedTo === 'string' ? task.assignedTo : task.assignedTo?.toString?.());
+                    const taskAssignee = usersList.find(assignedUser => assignedUser._id === taskAssigneeId) || task.assignedTo;
                     const todayDate = new Date();
                     todayDate.setHours(0,0,0,0);
                     const tomorrowDate = new Date(todayDate);
@@ -1273,6 +1338,15 @@ export default function Dashboard() {
                     const diffDays = dueDateObj ? Math.floor((dueDateObj - todayDate) / (1000 * 60 * 60 * 24)) : null;
                     const isOverdue = task.status !== 'Completed' && diffDays !== null && diffDays < 0;
                     const isDueSoon = task.status !== 'Completed' && diffDays !== null && (diffDays === 0 || diffDays === 1);
+                    const taskBorderColor = isOverdue
+                      ? "border-red-500/40 hover:border-red-400/50"
+                      : task.status === "Pending"
+                        ? "border-amber-500/40 hover:border-amber-400/50"
+                        : task.status === "In Progress"
+                          ? "border-cyan-500/40 hover:border-cyan-400/50"
+                          : task.status === "Completed"
+                            ? "border-emerald-500/40 hover:border-emerald-400/50"
+                            : "border-slate-700/50 hover:border-slate-600/70";
                     
                     return (
                     <div 
@@ -1280,7 +1354,8 @@ export default function Dashboard() {
                       className={clsx(
                         "rounded-xl p-3 sm:p-4 transition-all duration-200 border shadow-sm shadow-black/20 hover:-translate-y-0.5 hover:shadow-md hover:bg-slate-800/70",
                         editingTask === task._id ? "overflow-visible" : "overflow-hidden",
-                        "bg-slate-800/35 border-slate-700/50 hover:border-slate-600/70"
+                        "bg-slate-800/35",
+                        taskBorderColor
                       )}
                     >
                       
@@ -1364,7 +1439,10 @@ export default function Dashboard() {
                                       className="w-full flex items-center justify-between gap-2 bg-slate-800 border border-slate-500/50 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-200 outline-none"
                                     >
                                       <span className="truncate">
-                                        {usersList.find(u => u._id === editAssignedTo)?.name || (task.assignedTo?._id === editAssignedTo ? task.assignedTo.name : "Unassigned")}
+                                        <span className="flex min-w-0 items-center gap-2">
+                                          {editAssignedTo && <UserAvatar user={usersList.find(u => u._id === editAssignedTo) || taskAssignee} size="xs" />}
+                                          <span className="truncate">{usersList.find(u => u._id === editAssignedTo)?.name || (task.assignedTo?._id === editAssignedTo ? taskAssignee?.name : "Unassigned")}</span>
+                                        </span>
                                       </span>
                                       <User className={clsx("w-3.5 h-3.5 transition-transform shrink-0", isEditAssignOpen && "scale-110")} />
                                     </button>
@@ -1393,11 +1471,12 @@ export default function Dashboard() {
                                                 type="button"
                                                 onClick={() => { setEditAssignedTo(u._id); setIsEditAssignOpen(false); }}
                                                 className={clsx(
-                                                  "w-full text-left px-3 py-2 text-xs font-semibold transition-colors border-b border-slate-800/50 last:border-0 hover:bg-sky-600 hover:text-white",
+                                                  "flex w-full items-center gap-2 text-left px-3 py-2 text-xs font-semibold transition-colors border-b border-slate-800/50 last:border-0 hover:bg-sky-600 hover:text-white",
                                                   editAssignedTo === u._id ? "bg-slate-800 text-white" : "text-slate-400"
                                                 )}
                                               >
-                                                {u.name}
+                                                <UserAvatar user={u} size="xs" />
+                                                <span className="truncate">{u.name}</span>
                                               </button>
                                             ))
                                           )}
@@ -1462,8 +1541,8 @@ export default function Dashboard() {
                                 </span>
                                 {task.assignedTo && (
                                   <div className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full border shrink-0 bg-slate-800 text-slate-100 border-slate-700">
-                                    <User className="w-3.5 h-3.5 text-blue-400" />
-                                    {task.assignedTo.name}
+                                    <UserAvatar user={taskAssignee} size="xs" />
+                                    {taskAssignee?.name || task.assignedTo.name}
                                   </div>
                                 )}
                                 {task.dueDate && (

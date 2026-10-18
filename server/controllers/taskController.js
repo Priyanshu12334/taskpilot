@@ -144,7 +144,7 @@ const getTasks = async (req, res) => {
     // Use a new cache namespace so prior filter-scoped stats are not served
     // until their old entries expire.
     const baseCacheKey = getTaskCacheKey(req.user._id, req.query);
-    const cacheKey = baseCacheKey ? `${baseCacheKey}:stats-v2` : null;
+    const cacheKey = baseCacheKey ? `${baseCacheKey}:stats-v3` : null;
     if (cacheKey) {
       const cachedData = await getCache(cacheKey);
       if (cachedData) {

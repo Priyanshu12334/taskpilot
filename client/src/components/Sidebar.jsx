@@ -101,12 +101,6 @@ const SidebarContent = ({ user, navItems, setOpen, navigate, showNotifications }
             <NotificationDropdown />
           </div>
         )}
-        <button
-          className="sm:hidden p-2 text-slate-100 hover:text-white hover:bg-white/5 transition rounded-xl"
-          onClick={() => setOpen(false)}
-        >
-          <X className="w-5 h-5" />
-        </button>
       </div>
     </div>
 
@@ -210,8 +204,13 @@ export default function Sidebar() {
   return (
     <>
       {/* Mobile Top Header */}
-      <div className="sm:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-4 bg-gradient-to-br from-slate-600/30 to-slate-900 backdrop-blur-xl border-b border-slate-700/50">
-        <div className="flex items-center gap-2">
+      <div className={clsx(
+        'sm:hidden fixed top-0 left-0 right-0 flex h-16 box-border items-center justify-between gap-2 px-3 border-b transition-colors duration-200',
+        open
+          ? 'z-[80] bg-transparent border-transparent backdrop-blur-none'
+          : 'z-40 bg-[#141715]/95 backdrop-blur-md border-white/[0.04]'
+      )}>
+        <div className={clsx('flex items-center gap-2', open && 'invisible')}>
           <div className="w-8 h-8 bg-gradient-to-br from-slate-700 to-slate-700 rounded-3xl flex items-center justify-center shadow-lg shadow-black/50 border border-slate-700/30">
              <span className="text-[12px] font-black tracking-widest text-white">T<span className="text-emerald-600">P</span></span>
           </div>
@@ -220,7 +219,11 @@ export default function Sidebar() {
           </h2>
         </div>
         <div className="flex items-center gap-2">
-          {!isDesktop && ['admin', 'member'].includes(user?.role?.toLowerCase()) && <NotificationDropdown />}
+          {['admin', 'member'].includes(user?.role?.toLowerCase()) && (
+            <div className={clsx(open && 'hidden')}>
+              <NotificationDropdown />
+            </div>
+          )}
           <button
             type="button"
             onClick={() => setOpen(current => !current)}
@@ -229,8 +232,11 @@ export default function Sidebar() {
             aria-controls="mobile-navigation-drawer"
             className="relative flex h-10 w-10 items-center justify-center rounded-xl text-slate-300 transition-colors duration-200 hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/70 motion-reduce:transition-none"
           >
-            <Menu className={clsx('absolute h-5 w-5 transition-all duration-200 motion-reduce:transition-none', open ? 'rotate-90 scale-75 opacity-0' : 'rotate-0 scale-100 opacity-100')} />
-            <X className={clsx('absolute h-5 w-5 transition-all duration-200 motion-reduce:transition-none', open ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-75 opacity-0')} />
+            {open ? (
+              <X className="h-5 w-5 animate-in fade-in zoom-in-90 duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:animate-none" />
+            ) : (
+              <Menu className="h-5 w-5 animate-in fade-in zoom-in-90 duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:animate-none" />
+            )}
           </button>
         </div>
       </div>
@@ -239,7 +245,7 @@ export default function Sidebar() {
       <div
         aria-hidden="true"
         className={clsx(
-          'sm:hidden fixed inset-0 z-[60] bg-black/55 backdrop-blur-[2px] transition-opacity duration-300 motion-reduce:transition-none',
+          'sm:hidden fixed inset-0 z-[60] bg-black/45 backdrop-blur-[2px] transition-opacity duration-[250ms] ease-out motion-reduce:transition-none',
           open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
         )}
         onClick={() => setOpen(false)}
@@ -247,8 +253,8 @@ export default function Sidebar() {
 
       {/* Mobile Sidebar */}
       <div className={clsx(
-        'sm:hidden fixed inset-y-0 left-0 z-[70] h-dvh w-[min(20rem,calc(100vw_-_2.5rem))] overflow-y-auto bg-slate-900 p-5 shadow-2xl shadow-black/40 transition-transform duration-300 ease-out motion-reduce:transition-none',
-        open ? 'translate-x-0' : '-translate-x-full pointer-events-none'
+        'sm:hidden fixed inset-y-0 right-0 left-auto z-[70] h-dvh w-[min(20rem,80vw)] max-w-[calc(100vw-1rem)] overflow-x-hidden overflow-y-auto rounded-l-2xl bg-[#141715] p-5 shadow-2xl shadow-black/45 transition-transform duration-[320ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+        open ? 'translate-x-0' : 'translate-x-full pointer-events-none'
       )}>
         <div
           id="mobile-navigation-drawer"

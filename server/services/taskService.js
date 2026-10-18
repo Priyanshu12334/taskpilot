@@ -13,6 +13,7 @@ const countTasks = async (query) => {
 
 const getTasks = async (query, sortOption, skip, limit) => {
   return await Task.find(query)
+    .populate('user', 'name profilePhotoUrl')
     .populate('assignedTo', 'name email profilePhotoUrl')
     .sort(sortOption)
     .skip(skip)

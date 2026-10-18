@@ -97,6 +97,9 @@
       align-items: center !important;
       box-sizing: border-box !important;
     }
+    .edit-task-container .date-input-wrapper input[type="date"] {
+      min-height: 44px !important;
+    }
   }
 
   /* Hide the native icon but keep it clickable as a full-width overlay */
@@ -120,40 +123,6 @@
     transform: translateY(-50%);
     pointer-events: none;
     z-index: 1;
-  }
-
-  /* Edit Task Mobile Responsiveness */
-  @media (max-width: 768px) {
-    .edit-task-container {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .edit-task-container input,
-    .edit-task-container select,
-    .edit-task-container textarea,
-    .edit-task-container .date-input-wrapper {
-      width: 100% !important;
-      min-width: 100% !important;
-    }
-
-    .edit-actions {
-      flex-direction: column;
-      align-items: stretch !important;
-      gap: 16px !important;
-    }
-
-    .edit-actions > div {
-      flex-direction: column;
-      gap: 10px !important;
-    }
-
-    .edit-actions button {
-      flex: 1;
-      padding-top: 10px;
-      padding-bottom: 10px;
-    }
   }
 
   @keyframes pulse-subtle {

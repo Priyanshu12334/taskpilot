@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Loader2, Plus, Edit2, Trash2, Check, User, AlertTriangle, X, History, Clock, RefreshCw, ChevronDown, CheckCircle2, UserPlus, MessageSquare, Send, Lock, LayoutGrid, Calendar, Sparkles, ChevronLeft, ChevronRight, CheckSquare, ListTodo, ArrowRight } from 'lucide-react';
+import { Loader2, Plus, Edit2, Trash2, Check, Save, User, AlertTriangle, X, History, Clock, RefreshCw, ChevronDown, CheckCircle2, CheckCircle2 as CircleCheck, UserPlus, MessageSquare, Send, Lock, LayoutGrid, Calendar, Sparkles, ChevronLeft, ChevronRight, CheckSquare, ListTodo, ArrowRight } from 'lucide-react';
 import api from '../services/api';
 import { socket } from '../socket';
 import clsx from 'clsx';
@@ -14,6 +14,39 @@ import TaskProgressBar from '../components/TaskProgressBar';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
 dayjs.extend(relativeTime);
+
+const formatTaskCreatedAt = (createdAt) => {
+  if (!createdAt) return 'Creation date unavailable';
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return 'Creation date unavailable';
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  }).format(date);
+};
+
+const getNewestFirstActivity = (activityLog = []) => activityLog
+  .map((log, index) => ({ log, index, timestamp: log.timestamp ? new Date(log.timestamp).getTime() : Number.NaN }))
+  .sort((a, b) => {
+    const aHasTimestamp = Number.isFinite(a.timestamp);
+    const bHasTimestamp = Number.isFinite(b.timestamp);
+    if (aHasTimestamp && bHasTimestamp) return b.timestamp - a.timestamp;
+    if (aHasTimestamp !== bHasTimestamp) return aHasTimestamp ? -1 : 1;
+    return b.index - a.index;
+  })
+  .map(({ log }) => log);
+
+const formatActivityAction = (action = '') => action
+  ? `${action.charAt(0).toLowerCase()}${action.slice(1)}`
+  : 'updated the task';
+
+const formatActivityTime = (timestamp) => {
+  if (!timestamp || !Number.isFinite(new Date(timestamp).getTime())) return '';
+  return dayjs(timestamp).fromNow();
+};
 
 // ─── Pending User Onboarding Tutorial Component ──────────
 const tutorialSteps = [
@@ -303,6 +336,12 @@ export default function Dashboard() {
   
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [tasks, setTasks] = useState(cachedTasks || []);
+  const [expandedTaskIds, setExpandedTaskIds] = useState(() => new Set());
+  const [deletingTaskIds, setDeletingTaskIds] = useState(() => new Set());
+  const [taskPendingDelete, setTaskPendingDelete] = useState(null);
+  const deleteTaskLocks = useRef(new Set());
+  const [taskToasts, setTaskToasts] = useState([]);
+  const taskToastTimers = useRef(new Map());
   const [loadingTasks, setLoadingTasks] = useState(!cachedTasks);
   const displayTasks = tasks.filter(task => {
     if (user?.role?.toLowerCase() === 'admin') return true;
@@ -364,6 +403,16 @@ export default function Dashboard() {
   const [editAssignedTo, setEditAssignedTo] = useState('');
   const [editDueDate, setEditDueDate] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+  const updateTaskLock = useRef(false);
+
+  useEffect(() => {
+    if (!taskPendingDelete) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setTaskPendingDelete(null);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [taskPendingDelete]);
   
   const [usersList, setUsersList] = useState([]);
   
@@ -684,19 +733,107 @@ export default function Dashboard() {
 
   // 3. Handle Delete Task
   const handleDeleteTask = async (taskId) => {
-    if (!window.confirm("Are you sure you want to delete this task?")) return;
-    
+    if (deleteTaskLocks.current.has(taskId)) return;
+    const taskSnapshot = tasks;
+    const statsSnapshot = stats;
+    const pagesSnapshot = totalPages;
+    const pageSnapshot = currentPage;
+    const activitySnapshot = weeklyActivity;
+    const taskToDelete = tasks.find(task => task._id === taskId);
+    deleteTaskLocks.current.add(taskId);
+    setDeletingTaskIds(current => new Set(current).add(taskId));
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    const removeTask = list => list?.filter(task => task._id !== taskId) || [];
+    const nextTasks = removeTask(taskSnapshot);
+    setTasks(nextTasks);
+    cachedTasks = removeTask(cachedTasks);
+    if (taskToDelete) {
+      const nextStats = {
+        ...statsSnapshot,
+        total: Math.max(0, statsSnapshot.total - 1),
+        pending: Math.max(0, statsSnapshot.pending - (taskToDelete.status === 'Pending' ? 1 : 0)),
+        completed: Math.max(0, statsSnapshot.completed - (taskToDelete.status === 'Completed' ? 1 : 0)),
+        inProgress: Math.max(0, (statsSnapshot.inProgress || 0) - (taskToDelete.status === 'In Progress' ? 1 : 0)),
+        overdue: Math.max(0, (statsSnapshot.overdue || 0) - (taskToDelete.status !== 'Completed' && taskToDelete.dueDate && new Date(taskToDelete.dueDate) < new Date() ? 1 : 0))
+      };
+      setStats(nextStats);
+      cachedStats = nextStats;
+      if (taskToDelete.createdAt && new Date(taskToDelete.createdAt) >= new Date(Date.now() - 7 * 86400000)) {
+        setWeeklyActivity(current => current.filter(activity => activity.createdAt !== taskToDelete.createdAt));
+        cachedWeeklyActivity = activitySnapshot.filter(activity => activity.createdAt !== taskToDelete.createdAt);
+      }
+    }
+    if (nextTasks.length === 0 && currentPage > 1) {
+      setCurrentPage(page => Math.max(1, page - 1));
+      setTotalPages(Math.max(1, pagesSnapshot - 1));
+      cachedTotalPages = Math.max(1, pagesSnapshot - 1);
+    }
+
     try {
       await api.delete(`/tasks/${taskId}`);
-      await fetchTasks(true);
-      await fetchWeeklyActivity(true);
+      const toastId = Date.now();
+      setTaskToasts(current => [...current, { id: toastId, type: 'delete-success', message: 'Task deleted successfully.' }]);
+      taskToastTimers.current.set(toastId, setTimeout(() => {
+        setTaskToasts(current => current.filter(toast => toast.id !== toastId));
+        taskToastTimers.current.delete(toastId);
+      }, 3500));
     } catch (error) {
-      alert("Failed to delete task.");
       console.error(error);
+      setTasks(taskSnapshot);
+      cachedTasks = taskSnapshot;
+      setStats(statsSnapshot);
+      cachedStats = statsSnapshot;
+      setWeeklyActivity(activitySnapshot);
+      cachedWeeklyActivity = activitySnapshot;
+      setTotalPages(pagesSnapshot);
+      cachedTotalPages = pagesSnapshot;
+      setCurrentPage(pageSnapshot);
+      const toastId = Date.now();
+      setTaskToasts(current => [...current, { id: toastId, type: 'error', message: error.response?.data?.message || 'Failed to delete task. Please try again.' }]);
+      taskToastTimers.current.set(toastId, setTimeout(() => {
+        setTaskToasts(current => current.filter(toast => toast.id !== toastId));
+        taskToastTimers.current.delete(toastId);
+      }, 4500));
+    } finally {
+      deleteTaskLocks.current.delete(taskId);
+      setDeletingTaskIds(current => {
+        const next = new Set(current);
+        next.delete(taskId);
+        return next;
+      });
     }
   };
 
+  const dismissTaskToast = (toastId) => {
+    const timer = taskToastTimers.current.get(toastId);
+    if (timer) clearTimeout(timer);
+    taskToastTimers.current.delete(toastId);
+    setTaskToasts(current => current.filter(toast => toast.id !== toastId));
+  };
+
+  const addTaskToast = (message, type = 'success') => {
+    const toastId = Date.now() + Math.random();
+    setTaskToasts(current => [...current, { id: toastId, type, message }]);
+    taskToastTimers.current.set(toastId, setTimeout(() => {
+      setTaskToasts(current => current.filter(toast => toast.id !== toastId));
+      taskToastTimers.current.delete(toastId);
+    }, type === 'success' ? 3500 : 4500));
+  };
+
+  useEffect(() => () => {
+    taskToastTimers.current.forEach(timer => clearTimeout(timer));
+  }, []);
+
   // 4. Initiate Edit State
+  const toggleTaskExpanded = (taskId) => {
+    setExpandedTaskIds(current => {
+      const next = new Set(current);
+      if (next.has(taskId)) next.delete(taskId);
+      else next.add(taskId);
+      return next;
+    });
+  };
+
   const startEditing = (task) => {
     setEditingTask(task._id);
     setEditTitle(task.title);
@@ -716,11 +853,13 @@ export default function Dashboard() {
 
   const handleUpdateTask = async (e, taskId) => {
     e.preventDefault();
+    if (updateTaskLock.current || isUpdating) return;
     setUpdateError('');
 
     // Members can only update status — don't require title
     if (user?.role?.toLowerCase() === 'admin' && !editTitle.trim()) return;
 
+    updateTaskLock.current = true;
     setIsUpdating(true);
     try {
       // Admin sends full payload; Member only sends status
@@ -732,11 +871,14 @@ export default function Dashboard() {
       await api.put(`/tasks/${taskId}`, payload);
       await fetchTasks(true);
       setEditingTask(null);
+      addTaskToast('Task updated successfully');
     } catch (error) {
       const msg = error.response?.data?.message || error.message || 'Failed to update task';
       console.error('[handleUpdateTask] ❌', error.response?.status, msg);
       setUpdateError(msg);
+      addTaskToast(msg, 'error');
     } finally {
+      updateTaskLock.current = false;
       setIsUpdating(false);
     }
   };
@@ -1391,12 +1533,25 @@ export default function Dashboard() {
                           : task.status === "Completed"
                             ? "border-emerald-500/40 hover:border-emerald-400/50"
                             : "border-slate-700/50 hover:border-slate-600/70";
+                    const isExpanded = expandedTaskIds.has(task._id);
                     
                     return (
                     <div 
                       key={task._id} 
+                      onClick={(event) => {
+                        if (event.target.closest('button, input, textarea, select, a, form, [role="button"]')) return;
+                        if (editingTask !== task._id) toggleTaskExpanded(task._id);
+                      }}
+                      onKeyDown={(event) => {
+                        if ((event.key === 'Enter' || event.key === ' ') && !event.target.closest('button, input, textarea, select, a, form, [role="button"]') && editingTask !== task._id) {
+                          event.preventDefault();
+                          toggleTaskExpanded(task._id);
+                        }
+                      }}
+                      tabIndex={editingTask === task._id ? undefined : 0}
+                      aria-expanded={isExpanded}
                       className={clsx(
-                        "rounded-xl p-3 sm:p-4 transition-all duration-200 border shadow-sm shadow-black/20 hover:-translate-y-0.5 hover:shadow-md hover:bg-slate-800/70",
+                        "rounded-xl p-3 sm:p-4 cursor-pointer transition-all duration-200 border shadow-sm shadow-black/20 hover:-translate-y-0.5 hover:shadow-md hover:bg-slate-800/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50",
                         editingTask === task._id ? "overflow-visible" : "overflow-hidden",
                         "bg-slate-800/35",
                         taskBorderColor
@@ -1405,7 +1560,7 @@ export default function Dashboard() {
                       
                       {/* === INLINE EDIT MODE === */}
                       {editingTask === task._id ? (
-                        <form onSubmit={(e) => handleUpdateTask(e, task._id)} className="edit-task-container space-y-3 py-1 min-h-[150px] flex flex-col justify-between">
+                        <form onSubmit={(e) => handleUpdateTask(e, task._id)} className="edit-task-container min-w-0 space-y-3 py-1">
                           {updateError && (
                             <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-3 py-2 rounded-lg text-xs">
                               {updateError}
@@ -1418,12 +1573,12 @@ export default function Dashboard() {
                                 required
                                 value={editTitle}
                                 onChange={(e) => setEditTitle(e.target.value)}
-                                className="w-full bg-slate-800 border border-slate-500 rounded-lg px-2 py-1.5 text-sm text-slate-200 outline-none"
+                                className="h-11 w-full min-w-0 box-border bg-slate-800 border border-slate-500 rounded-lg px-3 text-sm text-slate-200 outline-none"
                               />
                               <textarea
                                 value={editDescription}
                                 onChange={(e) => setEditDescription(e.target.value)}
-                                className="w-full bg-slate-800 border border-slate-500/50 rounded-lg px-2 py-1.5 text-sm text-slate-200 outline-none min-h-[60px] resize-none overflow-y-auto"
+                                className="min-h-[76px] w-full min-w-0 box-border bg-slate-800 border border-slate-500/50 rounded-lg px-3 py-2 text-sm text-slate-200 outline-none resize-y overflow-y-auto"
                               />
                             </>
                           ) : (
@@ -1432,13 +1587,12 @@ export default function Dashboard() {
                               {task.description && <p className="text-sm text-slate-400 mt-1 break-words">{task.description}</p>}
                             </div>
                           )}
-                          <div className="edit-actions flex flex-wrap items-center justify-between gap-3 pt-2">
-                            <div className="flex flex-wrap items-center gap-2 flex-1">
-                              <div className="relative min-w-[130px] flex-1 sm:flex-none" ref={editStatusRef}>
+                          <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_220px]">
+                              <div className="relative min-w-0" ref={editStatusRef}>
                                 <button
                                   type="button"
                                   onClick={() => setIsEditStatusOpen(!isEditStatusOpen)}
-                                  className="w-full flex items-center justify-between gap-2 bg-slate-800 border border-slate-500/50 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-200 outline-none"
+                                  className="h-11 w-full flex items-center justify-between gap-2 bg-slate-800 border border-slate-500/50 rounded-lg px-3 text-sm font-medium text-slate-200 outline-none"
                                 >
                                   <span className="truncate">{editStatus}</span>
                                   <Clock className={clsx("w-3.5 h-3.5 transition-transform shrink-0", isEditStatusOpen && "rotate-180")} />
@@ -1472,7 +1626,7 @@ export default function Dashboard() {
 
                               {user?.role?.toLowerCase() === 'admin' && (
                                 <>
-                                  <div className="relative min-w-[140px] flex-1 sm:flex-none" ref={editAssignRef}>
+                                  <div className="relative min-w-0" ref={editAssignRef}>
                                     <button
                                       type="button"
                                       onClick={() => {
@@ -1480,7 +1634,7 @@ export default function Dashboard() {
                                         setIsEditAssignOpen(next);
                                         if (next) fetchUsers();
                                       }}
-                                      className="w-full flex items-center justify-between gap-2 bg-slate-800 border border-slate-500/50 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-200 outline-none"
+                                      className="h-11 w-full flex items-center justify-between gap-2 bg-slate-800 border border-slate-500/50 rounded-lg px-3 text-sm font-medium text-slate-200 outline-none"
                                     >
                                       <span className="truncate">
                                         <span className="flex min-w-0 items-center gap-2">
@@ -1528,47 +1682,47 @@ export default function Dashboard() {
                                       </div>
                                     )}
                                   </div>
-                                  <div className="date-input-wrapper min-w-[130px]">
+                                  <div className="date-input-wrapper min-w-0 w-full sm:col-span-2 lg:col-span-1 lg:max-w-[220px]">
                                     <input
                                       type="date"
                                       value={editDueDate}
                                       onChange={(e) => setEditDueDate(e.target.value)}
-                                      className="bg-slate-800 border border-slate-500/50 rounded-lg px-2 py-1.5 text-sm text-slate-200 outline-none w-full"
+                                      className="h-11 w-full min-w-0 box-border bg-slate-800 border border-slate-500/50 rounded-lg px-3 text-sm text-slate-200 outline-none"
                                     />
                                     <Calendar className="custom-calendar-icon w-4 h-4 text-slate-200" />
                                   </div>
                                 </>
                               )}
-                            </div>
+                          </div>
 
-                            <div className="flex gap-2 shrink-0">
+                          <div className="edit-actions flex items-center justify-end gap-2 pt-1">
                               <button 
                                 type="button"
                                 onClick={cancelEditing} 
-                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-800 transition"
+                                className="flex-1 sm:flex-none min-h-11 sm:min-w-24 px-4 text-sm font-semibold rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition"
                               >
                                 Cancel
                               </button>
                               <button 
                                 type="submit" 
                                 disabled={isUpdating}
-                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition flex items-center gap-1"
+                                className="flex-1 sm:flex-none min-h-11 sm:min-w-24 px-4 text-sm font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 transition flex items-center justify-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
                               >
-                                {isUpdating ? <Loader2 className="w-3 h-3 animate-spin"/> : <Check className="w-3 h-3"/>}
+                                {isUpdating ? <Loader2 className="w-3 h-3 animate-spin"/> : <Save className="w-3.5 h-3.5"/>}
                                 Save
                               </button>
-                            </div>
                           </div>
                         </form>
                       ) : (
                         /* === NORMAL VIEW MODE === */
-                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2.5 sm:gap-3">
-                          <div className="flex-overflow-hidden">
+                        <>
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2.5 sm:gap-3 min-w-0">
+                          <div className="min-w-0 flex-1">
                             <h3 className="text-base font-semibold text-white break-words">
                               {task.title}
                             </h3>
                             {task.description && (
-                              <p className="text-[13px] leading-relaxed mt-0.5 break-words text-slate-300">
+                              <p className={clsx("text-[13px] leading-relaxed mt-0.5 break-words text-slate-300", !isExpanded && "line-clamp-2")}>
                                 {task.description}
                               </p>
                             )}
@@ -1606,29 +1760,30 @@ export default function Dashboard() {
                             </div>
                             
                             {/* Mini Log Preview */}
-                            {task.activityLog?.length > 0 && (
+                            {task.activityLog?.length > 0 && !isExpanded && (
                               <div className="mt-3 pt-2.5 border-t border-slate-800/50">
                                 <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
                                   <Clock className="w-3 h-3" /> Recent Activity
                                 </div>
-                                <div className="space-y-1">
-                                  {[...task.activityLog].slice(-2).reverse().map((log, i) => (
-                                    <div key={i} className="flex items-start gap-2 text-[11px]">
-                                      <span className="text-emerald-500 font-bold shrink-0">•</span>
-                                      <span className="text-slate-300">
-                                        <span className="text-slate-100 font-medium">{log.user}</span> {log.action.toLowerCase()}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
+                                {(() => {
+                                  const latestActivity = getNewestFirstActivity(task.activityLog)[0];
+                                  const relativeTime = formatActivityTime(latestActivity.timestamp);
+                                  return (
+                                    <p className="flex flex-wrap items-baseline gap-x-1 text-[11px] leading-relaxed break-words">
+                                      <span className="text-slate-100 font-medium">{latestActivity.user || 'User'}</span>
+                                      <span className="text-slate-300 break-words">{formatActivityAction(latestActivity.action)}</span>
+                                      {relativeTime && <span className="text-slate-500">· {relativeTime}</span>}
+                                    </p>
+                                  );
+                                })()}
                               </div>
                             )}
                           </div>
-                              <div className="flex gap-2 shrink-0">
+                              <div className="flex flex-wrap items-center gap-1.5 shrink-0 cursor-auto">
                             {(user?.role?.toLowerCase() === 'admin' || (user?.role?.toLowerCase() === 'member' && task.assignedTo?._id === user?._id)) && (
                               <button
                                 onClick={() => startEditing(task)}
-                                className="p-1.5 text-slate-300 hover:text-blue-400 hover:bg-blue-400/10 rounded-md transition"
+                                className="h-9 w-9 shrink-0 p-2 text-slate-300 hover:text-white hover:bg-emerald-600 focus-visible:text-white focus-visible:bg-emerald-600 active:bg-emerald-700 rounded-lg transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70"
                                 title="Edit Task"
                               >
                                 <Edit2 className="w-4 h-4" />
@@ -1636,16 +1791,18 @@ export default function Dashboard() {
                             )}
                             {user?.role?.toLowerCase() === 'admin' && (
                               <button
-                                onClick={() => handleDeleteTask(task._id)}
-                                className="p-1.5 text-slate-300 hover:text-red-400 hover:bg-red-400/10 rounded-md transition"
+                                onClick={() => setTaskPendingDelete(task)}
+                                disabled={deletingTaskIds.has(task._id)}
+                                className="h-9 w-9 shrink-0 p-2 text-slate-300 hover:text-white hover:bg-[#DC2626] focus-visible:text-white focus-visible:bg-[#DC2626] active:bg-[#B91C1C] rounded-lg transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/70 disabled:opacity-60 disabled:cursor-not-allowed"
                                 title="Delete Task"
+                                aria-label="Delete task"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                {deletingTaskIds.has(task._id) ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Trash2 className="w-4 h-4" />}
                               </button>
                             )}
                             <button
                               onClick={() => setSelectedHistoryTask(task)}
-                              className="p-1.5 text-slate-300 hover:text-emerald-400 hover:bg-emerald-400/10 rounded-md transition"
+                              className="h-9 w-9 shrink-0 p-2 text-slate-400 hover:text-slate-100 hover:bg-slate-700/70 active:bg-slate-700 rounded-lg transition-colors duration-150"
                               title="View History"
                             >
                               <History className="w-4 h-4" />
@@ -1653,14 +1810,41 @@ export default function Dashboard() {
                             {(user?.role?.toLowerCase() === 'admin' || user?._id === task.assignedTo?._id) && (
                               <button
                                 onClick={() => fetchChatMessages(task)}
-                                className="p-1.5 text-slate-300 hover:text-blue-400 hover:bg-blue-400/10 rounded-md transition"
+                                className="h-9 w-9 shrink-0 p-2 text-slate-400 hover:text-slate-100 hover:bg-slate-700/70 active:bg-slate-700 rounded-lg transition-colors duration-150"
                                 title="Task Chat"
                               >
                                 <MessageSquare className="w-4 h-4" />
                               </button>
                             )}
+                            <button
+                              type="button"
+                              onClick={() => toggleTaskExpanded(task._id)}
+                              className="h-9 w-9 shrink-0 p-2 cursor-pointer text-slate-400 hover:text-slate-100 hover:bg-slate-700/70 active:bg-slate-700 rounded-lg transition-colors duration-150"
+                              title={isExpanded ? 'Collapse task details' : 'Expand task details'}
+                              aria-label={isExpanded ? 'Collapse task details' : 'Expand task details'}
+                              aria-expanded={isExpanded}
+                            >
+                              <ChevronDown className={clsx("w-4 h-4 transition-transform duration-200", isExpanded && "rotate-180")} />
+                            </button>
                           </div>
                         </div>
+                        <div className={clsx("grid transition-[grid-template-rows,opacity] duration-200 ease-out", isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")}>
+                          <div className="overflow-hidden min-w-0">
+                            <div className="mt-3 pt-3 border-t border-slate-700/60 space-y-3 text-sm">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-400">
+                                <div className="flex min-w-0 items-center gap-2">
+                                  <span className="text-slate-500 shrink-0">Created by:</span>
+                                  <UserAvatar user={task.user?.name ? task.user : { name: 'Unknown creator' }} size="sm" />
+                                  <span className="text-slate-200 min-w-0 break-words">{task.user?.name || 'Unknown creator'}</span>
+                                </div>
+                                <p className="min-w-0 break-words"><span className="text-slate-500">Created:</span> <span className="text-slate-200">{formatTaskCreatedAt(task.createdAt)}</span></p>
+                              </div>
+                              {task.activityLog?.length > 0 && <div><h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1.5">Activity history</h4><div className="space-y-2">{getNewestFirstActivity(task.activityLog).map((log, index) => <div key={`${log._id || log.timestamp || index}`} className="flex flex-wrap items-start gap-x-2 text-xs min-w-0"><span className="text-emerald-400 font-medium break-words">{log.user || log.name || 'User'}</span><span className="text-slate-300 break-words min-w-0">{formatActivityAction(log.action || log.message)}</span>{formatActivityTime(log.timestamp) && <span className="text-slate-500 shrink-0">{formatActivityTime(log.timestamp)}</span>}</div>)}</div></div>}
+                              {Array.isArray(task.comments) && task.comments.length > 0 && <div><h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1.5">Comments</h4><div className="space-y-2">{task.comments.map((comment, index) => <p key={comment._id || index} className="text-xs text-slate-300 break-words"><span className="text-slate-400">{comment.user?.name || comment.author?.name || 'User'}:</span> {comment.text || comment.message}</p>)}</div></div>}
+                            </div>
+                          </div>
+                        </div>
+                        </>
                       )}
                     </div>
                   )})}
@@ -1696,6 +1880,56 @@ export default function Dashboard() {
         </>
         )}
       </main>
+
+      {taskPendingDelete && (
+        <div
+          className="fixed inset-0 z-[110] flex items-center justify-center bg-black/65 p-4 backdrop-blur-sm animate-in fade-in duration-150"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setTaskPendingDelete(null);
+          }}
+        >
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="task-delete-title"
+            aria-describedby="task-delete-description"
+            className="w-full max-w-sm overflow-hidden rounded-2xl border border-red-500/25 bg-slate-900 shadow-2xl shadow-black/50 animate-in zoom-in-95 duration-150"
+          >
+            <div className="flex items-start gap-3 border-b border-slate-800 p-5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-red-500/20 bg-red-500/10 text-red-400">
+                <Trash2 className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 id="task-delete-title" className="text-base font-bold text-white">Delete task?</h2>
+                <p id="task-delete-description" className="mt-1 break-words text-sm text-slate-400">
+                  Delete “{taskPendingDelete.title}”? This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 p-4">
+              <button
+                type="button"
+                autoFocus
+                onClick={() => setTaskPendingDelete(null)}
+                className="min-h-10 rounded-lg bg-slate-800 px-4 text-sm font-semibold text-slate-300 transition-colors hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const taskId = taskPendingDelete._id;
+                  setTaskPendingDelete(null);
+                  handleDeleteTask(taskId);
+                }}
+                className="min-h-10 rounded-lg bg-[#DC2626] px-4 text-sm font-semibold text-white transition-colors hover:bg-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+              >
+                Delete task
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Activity History Modal */}
       {selectedHistoryTask && (
@@ -1874,6 +2108,15 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      <div className="fixed top-16 sm:top-5 right-4 z-[60] flex flex-col gap-2 w-[calc(100vw-2rem)] sm:w-80 max-w-sm" aria-live="polite">
+        {taskToasts.map(toast => (
+          <div key={toast.id} className={clsx('flex items-start gap-3 px-4 py-3 rounded-xl border shadow-2xl text-sm font-medium backdrop-blur animate-[slideIn_0.25s_ease-out]', ['success', 'delete-success'].includes(toast.type) ? 'bg-emerald-950/90 border-emerald-500/40 text-emerald-200' : 'bg-red-950/90 border-red-500/40 text-red-200')}>
+            {toast.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-400" /> : toast.type === 'delete-success' ? <CircleCheck className="w-4 h-4 shrink-0 mt-0.5 text-emerald-400" /> : <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />}
+            <span className="flex-1 leading-snug">{toast.message}</span>
+            <button onClick={() => dismissTaskToast(toast.id)} className="opacity-50 hover:opacity-100 transition shrink-0" aria-label="Dismiss notification"><X className="w-3.5 h-3.5" /></button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

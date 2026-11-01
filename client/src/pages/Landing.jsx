@@ -120,7 +120,7 @@ export default function Landing() {
         {/* Minimal High Conversion Hero Section */}
         <main className="relative z-10 flex flex-col items-center justify-center pt-14 sm:pt-20 px-4 sm:px-6 text-center pb-8 sm:pb-12">
           <h1
-            className="reveal-item text-[28px] sm:text-5xl md:text-6xl font-extrabold tracking-tight max-w-4xl leading-tight sm:leading-[1.1] mb-6 text-center"
+            className="reveal-item text-[28px] sm:text-5xl md:text-6xl font-extrabold tracking-tight max-w-4xl leading-tight sm:leading-[1.1] mb-3 text-center"
             data-reveal
           >
             <span className="block">Manage Tasks with Full</span>

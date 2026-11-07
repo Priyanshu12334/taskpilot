@@ -29,8 +29,6 @@ export default function Login() {
     setError(null)
     setIsSubmitting(true)
     
-    await new Promise(r => setTimeout(r, 600))
-
     const result = await login(email, password)
     
     if (result.success) {
@@ -43,13 +41,25 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center p-4 relative overflow-x-hidden">
+    <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center p-3 sm:p-5 lg:p-6 relative overflow-hidden">
 
       {/* Subtle Green Ambient Glows - Top-Left & Bottom-Right */}
       <div className="pointer-events-none fixed -top-32 -left-32 w-80 sm:w-[480px] h-80 sm:h-[480px] bg-emerald-500/10 rounded-full blur-3xl z-0" />
       <div className="pointer-events-none fixed -bottom-32 -right-32 w-80 sm:w-[480px] h-80 sm:h-[480px] bg-emerald-500/10 rounded-full blur-3xl z-0" />
 
-      <div className="w-full max-w-[400px] bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl p-6 sm:p-8 relative z-10 box-border">
+      <div className="relative z-10 grid w-full max-w-5xl grid-cols-1 items-center gap-5 lg:grid-cols-[1fr_0.9fr] lg:gap-7">
+        <section className="relative hidden h-[540px] w-full flex-col justify-center overflow-hidden rounded-3xl border border-slate-700/60 bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 p-8 lg:flex xl:p-10">
+          <div className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full border border-emerald-400/10" />
+          <div className="pointer-events-none absolute -bottom-40 -left-24 h-80 w-80 rounded-full border border-emerald-400/10" />
+          <div className="relative z-10 max-w-xl">
+            <p className="mb-5 text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-400">YOUR TEAM'S WORK, IN ONE PLACE</p>
+            <h2 className="mb-5 max-w-lg text-[2.35rem] font-bold leading-[1.08] tracking-[-0.035em] text-white xl:text-[2.65rem]">From scattered tasks<br />to seamless teamwork.</h2>
+            <p className="max-w-lg text-[15px] leading-[1.8] tracking-[0.005em] text-slate-400">TaskPilot brings task assignments, team collaboration and real-time progress together in one organized workspace.</p>
+            <p className="mt-7 text-sm font-medium leading-6 tracking-normal text-emerald-300">Know what's next. Know who's on it. Keep moving forward.</p>
+          </div>
+        </section>
+
+      <div className="w-full max-w-[420px] justify-self-center rounded-2xl border border-slate-700/50 bg-slate-800/60 p-5 shadow-2xl backdrop-blur-xl sm:p-7 lg:justify-self-end">
         <div className="text-center mb-5">
           <div className="bg-gradient-to-br from-slate-700 to-slate-700 w-12 h-12 rounded-3xl mx-auto flex items-center justify-center mb-3 shadow-lg shadow-black/50 border border-slate-700/50">
             <span className="text-[14px] font-black tracking-widest text-white">T<span className="text-emerald-600">P</span></span>
@@ -133,6 +143,7 @@ export default function Login() {
             Sign Up
           </Link>
         </p>
+      </div>
       </div>
     </div>
   )

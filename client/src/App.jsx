@@ -1,21 +1,20 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import api from './services/api';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Landing from './pages/Landing';
-import Dashboard from './pages/Dashboard';
-import Settings from './pages/Settings';
-import Chat from './pages/Chat';
-import AdminUsers from './pages/AdminUsers';
-import AccessRestricted from './pages/AccessRestricted';
-import PendingApproval from './pages/PendingApproval';
-import RejectedUser from './pages/RejectedUser';
-import AccountBlocked from './pages/AccountBlocked';
-import ContactUs from './pages/ContactUs';
 import Loader from './components/Loader';
 import { useAuth } from './context/AuthContext';
 import { isApprovalPending } from './utils/roleUtils';
+
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const Landing = lazy(() => import('./pages/Landing'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Chat = lazy(() => import('./pages/Chat'));
+const AdminUsers = lazy(() => import('./pages/AdminUsers'));
+const AccessRestricted = lazy(() => import('./pages/AccessRestricted'));
+const PendingApproval = lazy(() => import('./pages/PendingApproval'));
+const AccountBlocked = lazy(() => import('./pages/AccountBlocked'));
+const ContactUs = lazy(() => import('./pages/ContactUs'));
 
 // Protects routes for authenticated users only
 const PrivateRoute = ({ children }) => {
@@ -65,6 +64,7 @@ function App() {
   const { user } = useAuth();
 
   return (
+    <Suspense fallback={<Loader message="Loading page..." />}>
     <Routes>
       <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Landing />} />
       <Route path="/register" element={user ? <Navigate to="/dashboard" replace /> : <Register />} />
@@ -87,6 +87,7 @@ function App() {
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
   );
 }
 

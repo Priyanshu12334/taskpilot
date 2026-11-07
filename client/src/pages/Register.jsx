@@ -31,8 +31,6 @@ export default function Register() {
 
     setIsSubmitting(true);
     
-    await new Promise(r => setTimeout(r, 500));
-
     try {
       const response = await api.post('/auth/register', { name, email, password, purpose });
       
@@ -50,13 +48,25 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center p-4 relative overflow-x-hidden">
+    <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center p-3 sm:p-5 lg:p-6 relative overflow-hidden">
 
       {/* Subtle Green Ambient Glows - Top-Left & Bottom-Right */}
       <div className="pointer-events-none fixed -top-32 -left-32 w-80 sm:w-[480px] h-80 sm:h-[480px] bg-emerald-500/10 rounded-full blur-3xl z-0" />
       <div className="pointer-events-none fixed -bottom-32 -right-32 w-80 sm:w-[480px] h-80 sm:h-[480px] bg-emerald-500/10 rounded-full blur-3xl z-0" />
 
-      <div className="w-full max-w-[420px] bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-2xl p-5 sm:p-8 relative z-10 box-border">
+      <div className="relative z-10 grid w-full max-w-5xl grid-cols-1 items-center gap-5 lg:grid-cols-[1fr_0.9fr] lg:gap-7">
+      <section className="relative hidden h-[540px] w-full flex-col justify-center overflow-hidden rounded-3xl border border-slate-700/60 bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 p-8 lg:flex xl:p-10">
+        <div className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full border border-emerald-400/10" />
+        <div className="pointer-events-none absolute -bottom-40 -left-24 h-80 w-80 rounded-full border border-emerald-400/10" />
+        <div className="relative z-10 max-w-xl">
+          <p className="mb-5 text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-400">START BUILDING BETTER WORKFLOWS</p>
+          <h2 className="mb-5 max-w-lg text-[2.35rem] font-bold leading-[1.08] tracking-[-0.035em] text-white xl:text-[2.65rem]">Your team's next<br />chapter starts here.</h2>
+          <p className="max-w-lg text-[15px] leading-[1.8] tracking-[0.005em] text-slate-400">Create your TaskPilot workspace, bring your team together, and manage projects with clarity. Get started with registration and receive access after admin approval.</p>
+          <p className="mt-7 text-sm font-medium leading-6 tracking-normal text-emerald-300">One workspace. Clear ownership. Better execution.</p>
+        </div>
+      </section>
+
+      <div className="w-full max-w-[520px] justify-self-center rounded-2xl border border-slate-700/50 bg-slate-800/60 p-4 shadow-2xl backdrop-blur-xl sm:p-6 lg:justify-self-end">
         <div className="text-center mb-4 sm:mb-5">
           <div className="bg-gradient-to-br from-slate-700 to-slate-700 w-10 h-10 sm:w-12 sm:h-12 rounded-3xl sm:rounded-3xl mx-auto flex items-center justify-center mb-2 sm:mb-3 shadow-lg shadow-black/50 border border-slate-700/50">
             <span className="text-[12px] sm:text-[14px] font-black tracking-widest text-white">T<span className="text-emerald-600">P</span></span>
@@ -205,6 +215,7 @@ export default function Register() {
             Sign In
           </Link>
         </p>
+      </div>
       </div>
     </div>
   );

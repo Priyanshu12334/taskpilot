@@ -55,6 +55,7 @@ export const AuthProvider = ({ children }) => {
 
     // Dynamic Permission Sync: Refresh profile periodically (every 30s)
     const interval = setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
       const stored = localStorage.getItem('userInfo');
       if (stored) {
         try {

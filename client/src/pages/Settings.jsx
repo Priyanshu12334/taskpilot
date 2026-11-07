@@ -168,7 +168,7 @@ export default function Settings() {
       )}
 
       <main className="flex-1 sm:overflow-y-auto no-scrollbar min-h-screen sm:h-full pt-40 sm:pt-12 p-5 sm:p-12 relative z-10">
-        <div className="max-w-xl mx-auto">
+        <div className="mx-auto w-full max-w-[740px]">
           <header className="mb-8">
             <h1 className="text-2xl font-bold text-white">Account Settings</h1>
             <p className="text-slate-400 text-sm font-medium mt-1">

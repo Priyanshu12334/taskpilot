@@ -119,8 +119,8 @@ app.use('/api/chat', require('./routes/chatRoutes'));
 app.get('/api/messages', async (req, res) => {
   try {
     // Limits payload conservatively
-    const messages = await Message.find().populate('user', 'profilePhotoUrl role').sort({ createdAt: 1 }).limit(100);
-    res.status(200).json(messages.map((message) => ({
+    const messages = await Message.find().populate('user', 'profilePhotoUrl role').sort({ createdAt: -1 }).limit(100);
+    res.status(200).json(messages.reverse().map((message) => ({
       _id: message._id,
       user: message.user?._id || message.user,
       name: message.name,
